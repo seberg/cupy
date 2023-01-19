@@ -1043,6 +1043,7 @@ cdef function.Function _get_ufunc_kernel(
     for i, x in enumerate(in_types):
         str_var = 'in%d' % i
         str_type = str_var + '_type'
+        print("in types", x, arginfos[i])
         types.append((str_type, x))
         arginfo = arginfos[i]
         if arginfo.is_ndarray():
@@ -1056,6 +1057,7 @@ cdef function.Function _get_ufunc_kernel(
     for i, x in enumerate(out_types):
         str_var = 'out%d' % i
         str_type = str_var + '_type'
+        print("in types", x, arginfos[i])
         types.append((str_type, x))
         arginfo = arginfos[i + offset_out]
         op.append(f'{str_type} {str_var};')
