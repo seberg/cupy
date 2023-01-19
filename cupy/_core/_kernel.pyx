@@ -55,7 +55,6 @@ cdef str _get_simple_elementwise_kernel_code(
         tuple params, tuple arginfos, str operation, str name,
         _TypeMap type_map, str preamble, str loop_prep='', str after_loop=''):
     # No loop unrolling due to avoid 64-bit division
-    print(type_map)
     module_code = string.Template('''
     ${typedef_preamble}
     ${preamble}
@@ -547,49 +546,50 @@ cdef class _TypeMap:
 cdef tuple _decide_params_type_core(
         tuple in_params, tuple out_params, tuple in_args_dtype,
         tuple out_args_dtype):
-    type_dict = {}
+    type_dict = {}  # try to do each typedef only once.
+    out_types = []
     if out_args_dtype:
         assert len(out_params) == len(out_args_dtype)
         for p, a in zip(out_params, out_args_dtype):
             if a is None:
-                raise TypeError('Output arguments must be cupy.ndarray')
+                raise TypeError('Output arguments must be cupy arrays.')
+
+            a = numpy.dtype(a)
+            p_dtype = get_dtype(p.dtype)
+
             if p.dtype is not None:
-                if get_dtype(a) != get_dtype(p.dtype):
+                if a == p_dtype:
+                    ctype = p.ctype
+                elif type(a) == type(p_dtype):
+                    # a is the same type, but it is parametric (i.e. string length)
+                    ctype = _get_typename(a)
+                else:
                     raise TypeError(
                         'Type is mismatched. %s %s %s' % (p.name, a, p.dtype))
-            elif p.ctype in type_dict:
-                t = type_dict[p.ctype]
-                if get_dtype(t) != get_dtype(a):
-                    raise TypeError(
-                        'Type is mismatched. %s %s %s %s' % (
-                            p.name, a, t, p.ctype))
-            else:
-                type_dict[p.ctype] = a
+
+                type_dict[ctype] = a
+                out_types.append(a)
+
 
     assert len(in_params) == len(in_args_dtype)
-    unknown_ctype = []  # TODO(leofang): remove this as it's unused?
+    in_types = []
     for p, a in zip(in_params, in_args_dtype):
-        if a is None:
-            if p.dtype is None:
-                unknown_ctype.append(p.ctype)
-        else:
-            if p.dtype is not None:
-                if numpy.dtype(a) != numpy.dtype(p.dtype):
-                    raise TypeError(
-                        'Type is mismatched. %s %s %s' % (p.name, a, p.dtype))
-            elif p.ctype in type_dict:
-                t = type_dict[p.ctype]
-                if numpy.dtype(t) != numpy.dtype(a):
-                    raise TypeError(
-                        'Type is mismatched. %s %s %s %s' % (
-                            p.name, a, t, p.ctype))
-            else:
-                type_dict[p.ctype] = a
+        a = numpy.dtype(a)  # a is None is possible?
+        p_dtype = get_dtype(p.dtype)
 
-    in_types = tuple([type_dict[p.ctype] if p.dtype is None else p.dtype
-                      for p in in_params])
-    out_types = tuple([type_dict[p.ctype] if p.dtype is None else p.dtype
-                       for p in out_params])
+        if p.dtype is not None:
+            if a == p_dtype:
+                ctype = p.ctype
+            elif type(a) == type(p_dtype):
+                # a is the same type, but it is parametric (i.e. string length)
+                ctype = _get_typename(a)
+            else:
+                raise TypeError(
+                    'Type is mismatched. %s %s %s' % (p.name, a, p.dtype))
+
+            type_dict[ctype] = a
+            in_types.append(a)
+
     type_map = _TypeMap(tuple(sorted(type_dict.items())))
     return in_types, out_types, type_map
 
