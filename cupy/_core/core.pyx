@@ -2096,6 +2096,7 @@ cdef list cupy_header_list = [
     'cupy/carray.cuh',
     'cupy/atomics.cuh',
     'cupy/math_constants.h',
+    'cupy/numpystring.h',
 ]
 if _is_hip:
     cupy_header_list.append('cupy/hip_workaround.cuh')
@@ -2471,7 +2472,7 @@ cdef _ndarray_base _array_from_nested_numpy_sequence(
         arrays, src_dtype, dst_dtype, const shape_t& shape, order,
         Py_ssize_t ndmin):
     a_dtype = get_dtype(dst_dtype)  # convert to numpy.dtype
-    if a_dtype.char not in '?bhilqBHILQefdFD':
+    if a_dtype.char not in '?bhilqBHILQefdFDUS':
         raise ValueError('Unsupported dtype %s' % a_dtype)
     cdef _ndarray_base a  # allocate it after pinned memory is secured
     cdef size_t itemcount = internal.prod(shape)
@@ -2530,7 +2531,7 @@ cdef _ndarray_base _array_default(obj, dtype, order, Py_ssize_t ndmin):
             order = 'C'
     a_cpu = numpy.array(obj, dtype=dtype, copy=False, order=order,
                         ndmin=ndmin)
-    if a_cpu.dtype.char not in '?bhilqBHILQefdFD':
+    if a_cpu.dtype.char not in '?bhilqBHILQefdFDUS':
         raise ValueError('Unsupported dtype %s' % a_cpu.dtype)
     a_cpu = a_cpu.astype(a_cpu.dtype.newbyteorder('<'), copy=False)
     a_dtype = a_cpu.dtype

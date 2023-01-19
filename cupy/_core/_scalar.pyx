@@ -66,11 +66,27 @@ cdef object _numpy_complex_ = numpy.complex_
 
 
 cpdef str get_typename(dtype):
+    # TODO(seberg): Maybe it would make sense to return additional includes
+    #               here to allow almost arbitray extension in the future?
+    # TODO(seberg): By default reject strings as they will lead to errors?
     if dtype is None:
         raise ValueError('dtype is None')
-    if dtype not in _typenames:
-        dtype = _dtype.get_dtype(dtype).type
-    return _typenames[dtype]
+
+    if dtype in _typenames:
+        return _typenames[dtype]
+
+    dtype = _dtype.get_dtype(dtype)
+
+    if dtype.type in _typenames:
+        return _typenames[dtype.type]
+
+    # TODO: Are these the best names for char8_t and char32_t to use?
+    if dtype.char == "S":
+        return f"NumPyString<unsigned char, {dtype.itemsize}>"
+    else:
+        return f"NumPyString<unsigned int, {dtype.itemsize // 4}>"
+
+    raise TypeError(f"Cannot compile for dtype '{dtype}'")
 
 
 cdef dict _typenames = {}

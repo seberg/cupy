@@ -879,14 +879,14 @@ cdef class ElementwiseKernel:
         in_ndarray_types = []
         for a in in_args:
             if isinstance(a, _ndarray_base):
-                t = a.dtype.type
+                t = a.dtype
             elif isinstance(a, texture.TextureObject):
                 t = 'cudaTextureObject_t'
             else:
                 t = None
             in_ndarray_types.append(t)
         in_ndarray_types = tuple(in_ndarray_types)
-        out_ndarray_types = tuple([a.dtype.type for a in out_args])
+        out_ndarray_types = tuple([a.dtype for a in out_args])
 
         in_types, out_types, type_map = self._decide_params_type(
             in_ndarray_types, out_ndarray_types)
@@ -1385,7 +1385,9 @@ cdef class ufunc:
         cdef _ArgInfo arginfo
         inout_type_words = []
         for arginfo in arginfos:
-            dtype = str(numpy.dtype(arginfo.dtype))
+            # TODO(seberg): Using __name__ is a bit strange but avoids `<U0`
+            #               for unicode/str.
+            dtype = numpy.dtype(arginfo.dtype).type.__name__
             if arginfo.is_ndarray():
                 inout_type_words.append(dtype)
             elif arginfo.is_scalar():
@@ -1555,11 +1557,11 @@ cdef class _Ops:
             use_raw_value = _check_should_use_min_scalar(in_args)
             if use_raw_value:
                 in_types = tuple([
-                    a.dtype.type if isinstance(a, _ndarray_base)
+                    a.dtype if isinstance(a, _ndarray_base)
                     else _min_scalar_type(a)
                     for a in in_args])
             else:
-                in_types = tuple([a.dtype.type for a in in_args])
+                in_types = tuple([a.dtype for a in in_args])
             op = cache.get(in_types, ())
             if op is ():
                 op = self._guess_routine_from_in_types(in_types)
@@ -1578,7 +1580,7 @@ cdef class _Ops:
             return op
 
         if dtype is None:
-            dtype = tuple([a.dtype.type for a in in_args])
+            dtype = tuple([a.dtype for a in in_args])
         raise TypeError('Wrong type (%s) of arguments for %s' %
                         (dtype, name))
 
