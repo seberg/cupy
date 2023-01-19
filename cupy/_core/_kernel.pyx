@@ -546,6 +546,12 @@ cdef class _TypeMap:
 cdef tuple _decide_params_type_core(
         tuple in_params, tuple out_params, tuple in_args_dtype,
         tuple out_args_dtype):
+    # TODO: This step is effectively NumPy's type resolution step... Now, the
+    #       only way to do this is to do proper type resolution, there are
+    #       two problems questions: 1. NumPy doesn't make that very public yet
+    #       (partially through ufnc._resolve_descitpors!)  and 2. even if we
+    #       use NumPy, we need to map to its ufuncs? OTOH, it would make NEP 50
+    #       trivial?
     type_dict = {}  # try to do each typedef only once.
     out_types = []
     if out_args_dtype:
@@ -591,6 +597,7 @@ cdef tuple _decide_params_type_core(
             in_types.append(a)
 
     type_map = _TypeMap(tuple(sorted(type_dict.items())))
+    print("got here!", in_types, out_types, type_map)
     return in_types, out_types, type_map
 
 
