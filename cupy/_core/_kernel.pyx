@@ -55,6 +55,7 @@ cdef str _get_simple_elementwise_kernel_code(
         tuple params, tuple arginfos, str operation, str name,
         _TypeMap type_map, str preamble, str loop_prep='', str after_loop=''):
     # No loop unrolling due to avoid 64-bit division
+    print(type_map)
     module_code = string.Template('''
     ${typedef_preamble}
     ${preamble}
