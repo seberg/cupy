@@ -222,7 +222,7 @@ cdef class _ArgInfo:
         ret._init(
             ARG_KIND_NDARRAY,
             type(arg),
-            arg.dtype.type,
+            arg.dtype,
             arg._shape.size(),
             arg._c_contiguous,
             arg._index_32_bits)
