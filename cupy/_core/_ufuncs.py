@@ -21,7 +21,7 @@ def _s_copy_resolver(op, arginfo):
     in_dtype = _fix_to_sctype(arginfo[0].dtype, sctype)
     out_dtype = in_dtype  # could call _fix_to_sctype just to sanity check
 
-    return in_dtype, out_dtype
+    return (in_dtype,), (out_dtype,)
 
 
 elementwise_copy = create_ufunc(
