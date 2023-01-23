@@ -114,7 +114,7 @@ concrete dtype mapping.
     @staticmethod
     cdef _Op from_type_and_routine(str typ, routine)
 
-    cdef tuple resolve_dtypes(self, arginfos)
+    cdef tuple resolve_dtypes(self, tuple arginfos)
 
     # Creates an op instance parsing a dtype mapping with given error function.
     @staticmethod
@@ -145,10 +145,11 @@ cdef class _Ops:
 
     cpdef _Op _guess_routine_from_dtype(self, object dtype)
 
+    cpdef extend(self, obj)
 
 cpdef create_ufunc(name, ops, routine=*, preamble=*, doc=*,
                    default_casting=*, loop_prep=*, out_ops=*,
-                   cutensor_op=*, scatter_op=*)
+                   cutensor_op=*, scatter_op=*, custom_ops=*)
 
 cdef tuple _get_arginfos(list args)
 

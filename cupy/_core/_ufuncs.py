@@ -1,3 +1,4 @@
+import numpy as np
 from cupy._core._kernel import create_ufunc, _Op
 
 
@@ -15,7 +16,7 @@ def _fix_to_sctype(dtype, sctype):
 
 def _s_copy_resolver(op, arginfo):
     # Support only U->S and S->U casts right now
-    sctype = op.in_type[0]
+    sctype = op.in_types[0]
 
     in_dtype = _fix_to_sctype(arginfo[0].dtype, sctype)
     out_dtype = in_dtype  # could call _fix_to_sctype just to sanity check

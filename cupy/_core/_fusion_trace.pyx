@@ -1,6 +1,6 @@
 import numpy
 
-from cupy._core import _kernel, _Op
+from cupy._core import _kernel
 from cupy._core import _reduction
 from cupy._core import core
 from cupy._core._fusion_interface import _VariableProxy
@@ -15,6 +15,7 @@ from cupy._core import _fusion_op
 from cupy._core import _fusion_optimization
 
 from cupy._core cimport internal
+from cupy._core._kernel cimport _Op
 from cupy._core._dtype cimport _raise_if_invalid_cast
 
 

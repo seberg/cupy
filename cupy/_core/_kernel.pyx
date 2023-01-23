@@ -1500,8 +1500,8 @@ cdef class _Op:
         self.error_func = error_func
         self._resolution_func = resolution_func
         if resolution_func is None:
-            self._in_dtypes = tuple([get_dtype(t) for t in self.in_types])
-            self._out_dtypes = tuple([get_dtype(t) for t in self.out_types])
+            self._in_dtypes = tuple([get_dtype(t) for t in in_types])
+            self._out_dtypes = tuple([get_dtype(t) for t in out_types])
         else:
             # We need to use the resolution function (dtypes may depend on
             # input for parametric dtypes like strings).
@@ -1533,7 +1533,7 @@ cdef class _Op:
         if self.error_func is not None:
             self.error_func()
 
-    cdef tuple resolve_dtypes(self, arginfos):
+    cdef tuple resolve_dtypes(self, tuple arginfos):
         # In most cases, this just returns the typical dtypes matching the
         # the dtype kind (or DType class, as of now represented by the scalar).
         # For parametric DTypes, more complex handling may be necessary and
@@ -1554,6 +1554,10 @@ cdef class _Ops:
         self.ops = ops
         self.nin = nin
         self.nout = nout
+
+    cpdef extend(self, obj):
+        # TODO: Should check that all new objects are _Op instances.
+        self.ops = self.ops + tuple(obj)
 
     @staticmethod
     cdef _Ops from_tuples(object ops, routine):
@@ -1643,7 +1647,7 @@ cdef class _Ops:
 cpdef create_ufunc(name, ops, routine=None, preamble='', doc='',
                    default_casting=None, loop_prep='', out_ops=None,
                    cutensor_op=None, scatter_op=None,
-                   object custom_ops=[]):
+                   object custom_ops=()):
     ops_ = _Ops.from_tuples(ops, routine)
     ops_.extend(custom_ops)
     _out_ops = None if out_ops is None else _Ops.from_tuples(out_ops, routine)
