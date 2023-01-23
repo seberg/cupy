@@ -2,10 +2,11 @@
 #define CUPY_NUMPYSTRING_H
 
 
-template<typename T, int maxlen>
+template<typename T, int maxlen_>
 class NumPyString {
 public:
-    T data[maxlen];
+    static const int maxlen = maxlen_;
+    T data[maxlen_];
 
     __host__ __device__ int strlen() {
         int len = maxlen;
@@ -15,30 +16,30 @@ public:
         return len;
     }
 
-    __host__ __device__ T operator[](int i){
+    __host__ __device__ T operator[](int i) const {
         /* Allowing too large `i` for easier handling of different length */
-        if (i < this.maxlen) {
-            return this.data[i];
+        if (i < this->maxlen) {
+            return this->data[i];
         }
         return 0;
     }
 
-    __host__ __device__ NumPyString& operator=(NumPyString &other)
+    template<typename OT, int Olen>
+    __host__ __device__ NumPyString& operator=(const NumPyString<OT, Olen> &other)
     {
-        // For now don't allow, we should error if not ascii/latin1, or
-        // should it simply cast and don't worry about it?
-        static_assert(sizeof(this.T) >= sizeof(other.T));
-        for (int i = 0; i < this.maxlen; i++) {
-            this.data[i] = other[i];
+        // TODO: This is very unsafe (as it just casts)
+        for (int i = 0; i < this->maxlen; i++) {
+            this->data[i] = other[i];
         }
-        return this;
+        return *this;
     }
 
-    __host__ __device__ bool operator==(NumPyString &other)
+    template<typename OT, int Olen>
+    __host__ __device__ bool operator==(const NumPyString<OT, Olen> &other)
     {
-        int longer = this.maxlen > other.maxlen ? this.maxlen : other.maxlen;
+        int longer = this->maxlen > other->maxlen ? this->maxlen : other->maxlen;
         for (int i = 0; i < longer; i++) {
-            if (this->data[i] != other.data[i]) {
+            if (this->data[i] != other->data[i]) {
                 return false;
             }
         }

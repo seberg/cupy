@@ -597,7 +597,6 @@ cdef tuple _decide_params_type_core(
             in_types.append(a)
 
     type_map = _TypeMap(tuple(sorted(type_dict.items())))
-    print("got here!", in_types, out_types, type_map)
     return in_types, out_types, type_map
 
 
@@ -1043,7 +1042,6 @@ cdef function.Function _get_ufunc_kernel(
     for i, x in enumerate(in_types):
         str_var = 'in%d' % i
         str_type = str_var + '_type'
-        print("in types", x, arginfos[i])
         types.append((str_type, x))
         arginfo = arginfos[i]
         if arginfo.is_ndarray():
@@ -1057,7 +1055,6 @@ cdef function.Function _get_ufunc_kernel(
     for i, x in enumerate(out_types):
         str_var = 'out%d' % i
         str_type = str_var + '_type'
-        print("in types", x, arginfos[i])
         types.append((str_type, x))
         arginfo = arginfos[i + offset_out]
         op.append(f'{str_type} {str_var};')
