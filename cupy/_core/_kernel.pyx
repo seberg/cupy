@@ -546,12 +546,8 @@ cdef class _TypeMap:
 cdef tuple _decide_params_type_core(
         tuple in_params, tuple out_params, tuple in_args_dtype,
         tuple out_args_dtype):
-    # TODO: This step is effectively NumPy's type resolution step... Now, the
-    #       only way to do this is to do proper type resolution, there are
-    #       two problems questions: 1. NumPy doesn't make that very public yet
-    #       (partially through ufnc._resolve_descitpors!)  and 2. even if we
-    #       use NumPy, we need to map to its ufuncs? OTOH, it would make NEP 50
-    #       trivial?
+    # TODO: This needs work and cleanup.  Right now it may not even be correct.
+
     type_dict = {}  # try to do each typedef only once.
     out_types = []
     if out_args_dtype:
@@ -561,9 +557,9 @@ cdef tuple _decide_params_type_core(
                 raise TypeError('Output arguments must be cupy arrays.')
 
             a = numpy.dtype(a)
-            p_dtype = get_dtype(p.dtype)
 
             if p.dtype is not None:
+                p_dtype = get_dtype(p.dtype)
                 if a == p_dtype:
                     ctype = p.ctype
                 elif type(a) == type(p_dtype):
@@ -574,16 +570,18 @@ cdef tuple _decide_params_type_core(
                         'Type is mismatched. %s %s %s' % (p.name, a, p.dtype))
 
                 type_dict[ctype] = a
-                out_types.append(a)
+            else:
+                type_dict[p.ctype] = a
 
+            out_types.append(a)
 
     assert len(in_params) == len(in_args_dtype)
     in_types = []
     for p, a in zip(in_params, in_args_dtype):
         a = numpy.dtype(a)  # a is None is possible?
-        p_dtype = get_dtype(p.dtype)
 
         if p.dtype is not None:
+            p_dtype = get_dtype(p.dtype)
             if a == p_dtype:
                 ctype = p.ctype
             elif type(a) == type(p_dtype):
@@ -591,13 +589,15 @@ cdef tuple _decide_params_type_core(
                 ctype = _get_typename(a)
             else:
                 raise TypeError(
-                    'Type is mismatched. %s %s %s' % (p.name, a, p.dtype))
+                    'Type is mismatched. %s %s %s' % (p.name, a, p_dtype))
 
             type_dict[ctype] = a
-            in_types.append(a)
+        else:
+            type_dict[p.ctype] = a
+        in_types.append(a)
 
     type_map = _TypeMap(tuple(sorted(type_dict.items())))
-    return in_types, out_types, type_map
+    return tuple(in_types), tuple(out_types), type_map
 
 
 cdef list _broadcast(list args, tuple params, bint use_size, shape_t& shape):

@@ -101,6 +101,8 @@ cdef _setup_type_dict():
         _typenames[t] = _typenames_base[d]
         k = ord(d.kind)
         _dtype_kind_size_dict[t] = (k, d.itemsize)
+        # TODO: Also include the dtype, should probably not need this:
+        _dtype_kind_size_dict[d] = (k, d.itemsize)
     # CUDA types
     for t in ('cudaTextureObject_t',):
         _typenames[t] = t
