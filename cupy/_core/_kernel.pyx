@@ -1412,8 +1412,9 @@ cdef class ufunc:
         if kern is None:
             name = self._get_name_with_type(arginfos, has_where)
             params = self._params_with_where if has_where else self._params
+            in_dtypes, out_dtypes = op.resolve_dtypes(arginfos)
             kern = _get_ufunc_kernel(
-                op.in_types, op.out_types, op.routine, arginfos, has_where,
+                in_dtypes, out_dtypes, op.routine, arginfos, has_where,
                 params, name, self._preamble, self._loop_prep)
             self._kernel_memo[key] = kern
         return kern
@@ -1486,7 +1487,7 @@ cdef class _Op:
 
     def __init__(
             self, tuple in_types, tuple out_types, object routine,
-            object error_func):
+            object error_func, object resolution_func=None):
         if error_func is None:
             assert routine is not None
         else:
@@ -1497,6 +1498,15 @@ cdef class _Op:
         self.nout = len(out_types)
         self.routine = routine
         self.error_func = error_func
+        self._resolution_func = resolution_func
+        if resolution_func is None:
+            self._in_dtypes = tuple([get_dtype(t) for t in self.in_types])
+            self._out_dtypes = tuple([get_dtype(t) for t in self.out_types])
+        else:
+            # We need to use the resolution function (dtypes may depend on
+            # input for parametric dtypes like strings).
+            self._in_dtypes = None
+            self._out_dtypes = None
 
     @staticmethod
     cdef _Op _from_type_and_routine_or_error_func(
@@ -1523,11 +1533,14 @@ cdef class _Op:
         if self.error_func is not None:
             self.error_func()
 
-    cpdef tuple get_in_dtypes(self):
-        return tuple([get_dtype(t) for t in self.in_types])
-
-    cpdef tuple get_out_dtypes(self):
-        return tuple([get_dtype(t) for t in self.out_types])
+    cdef tuple resolve_dtypes(self, arginfos):
+        # In most cases, this just returns the typical dtypes matching the
+        # the dtype kind (or DType class, as of now represented by the scalar).
+        # For parametric DTypes, more complex handling may be necessary and
+        # can be implemented by providing the resolver function.
+        if self._in_dtypes is not None:
+            return self._in_dtypes, self._out_dtypes
+        return self._resolution_func(self, arginfos)
 
 
 cdef class _Ops:
@@ -1629,8 +1642,10 @@ cdef class _Ops:
 
 cpdef create_ufunc(name, ops, routine=None, preamble='', doc='',
                    default_casting=None, loop_prep='', out_ops=None,
-                   cutensor_op=None, scatter_op=None):
+                   cutensor_op=None, scatter_op=None,
+                   object custom_ops=[]):
     ops_ = _Ops.from_tuples(ops, routine)
+    ops_.extend(custom_ops)
     _out_ops = None if out_ops is None else _Ops.from_tuples(out_ops, routine)
     return ufunc(
         name, ops_.nin, ops_.nout, ops_, preamble,

@@ -102,6 +102,9 @@ concrete dtype mapping.
         # disallowed, error_func must be set instead of routine.
         # It's called by check_valid() method.
         readonly object error_func
+        readonly object _resolution_func
+        readonly object _in_dtypes
+        readonly object _out_dtypes
 
     @staticmethod
     cdef _Op _from_type_and_routine_or_error_func(
@@ -111,9 +114,7 @@ concrete dtype mapping.
     @staticmethod
     cdef _Op from_type_and_routine(str typ, routine)
 
-    cpdef tuple get_in_dtypes(self)
-
-    cpdef tuple get_out_dtypes(self)
+    cdef tuple resolve_dtypes(self, arginfos)
 
     # Creates an op instance parsing a dtype mapping with given error function.
     @staticmethod

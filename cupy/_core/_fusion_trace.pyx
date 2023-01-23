@@ -1,6 +1,6 @@
 import numpy
 
-from cupy._core import _kernel
+from cupy._core import _kernel, _Op
 from cupy._core import _reduction
 from cupy._core import core
 from cupy._core._fusion_interface import _VariableProxy
@@ -99,6 +99,8 @@ cdef class _ShapeConstraints:
 
 
 def _guess_routine(func, args, dtype):
+    cdef _Op op
+    cdef tuple in_out_dtypes
     assert isinstance(func, (_kernel.ufunc, _reduction._SimpleReductionKernel))
 
     # Feeds dummy arguments with appropriate dtypes passed to `guess_routine`.
@@ -113,7 +115,8 @@ def _guess_routine(func, args, dtype):
 
     op = func._ops.guess_routine(
         func.name, func._routine_cache, dummy_args, dtype, None)
-    return op.get_in_dtypes(), op.get_out_dtypes(), op.routine
+    in_out_dtypes = op.resolve_dtypes(dummy_args)
+    return  in_out_dtypes[0], in_out_dtypes[1], op.routine
 
 
 def _base(array):
