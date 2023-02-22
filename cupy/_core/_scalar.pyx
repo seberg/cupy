@@ -225,6 +225,7 @@ cdef class CScalar(CPointer):
         return ret
 
     cpdef apply_dtype(self, dtype):
+        print("Apply dtype", dtype)
         cdef Scalar* s = <Scalar*>self.ptr
         if self.kind == b'b':
             val = s.bool_
