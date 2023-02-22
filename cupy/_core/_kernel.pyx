@@ -605,6 +605,12 @@ cdef tuple _decide_params_type_core(
                 raise TypeError(
                     'Type is mismatched. %s %s %s' % (p.name, a, p_dtype))
 
+    if not out_args_dtype:
+        # Out arguments types inferred from inputs (typically), the same
+        # way as inputs otherwise.
+        out_types = [type_dict[p.ctype] if p.dtype is None else p.dtype
+                     for p in out_params]
+
     type_map = _TypeMap(tuple(sorted(type_dict.items())))
     print(     "Result:", in_types, out_types, type_map)
     return tuple(in_types), tuple(out_types), type_map
