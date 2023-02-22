@@ -6,7 +6,9 @@ template<typename T, int maxlen_>
 class NumPyString {
 public:
     static const int maxlen = maxlen_;
-    T data[maxlen_];
+    // TODO: 0 is possible, but C doesn't like it here (for good reasons)
+    //       there may be a way to tell C++ that empty is OK/possible?
+    T data[maxlen_ ? maxlen_ : 1];
 
     __host__ __device__ int strlen() {
         int len = maxlen;
