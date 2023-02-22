@@ -547,7 +547,7 @@ cdef tuple _decide_params_type_core(
         tuple in_params, tuple out_params, tuple in_args_dtype,
         tuple out_args_dtype):
     # TODO: This needs work and cleanup.  Right now it may not even be correct.
-    print(_decide_params_type_core, in_params, out_params, in_args_dtype, out_args_dtype)
+    print("_decide_params_type_core", in_params, out_params, in_args_dtype, out_args_dtype)
     print("----------------")
 
     type_dict = {}  # try to do each typedef only once.
@@ -580,7 +580,13 @@ cdef tuple _decide_params_type_core(
     assert len(in_params) == len(in_args_dtype)
     in_types = []
     for p, a in zip(in_params, in_args_dtype):
-        a = numpy.dtype(a)  # a is None is possible?
+        if a is None:
+            # The parameter is not passed as an array.
+            in_types.append(p.ctype)
+            type_dict[p.ctype] = p.ctype
+            continue
+
+        a = numpy.dtype(a)
 
         if p.dtype is not None:
             p_dtype = get_dtype(p.dtype)
