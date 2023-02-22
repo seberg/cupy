@@ -546,6 +546,10 @@ cdef class _TypeMap:
 cdef tuple _decide_params_type_core(
         tuple in_params, tuple out_params, tuple in_args_dtype,
         tuple out_args_dtype):
+    # TODO: This needs work and cleanup.  Right now it may not even be correct.
+    print("_decide_params_type_core", in_params, out_params, in_args_dtype, out_args_dtype)
+    print("----------------")
+
     # TODO: The logic is still pretty likely a bit broken?!
     # typedef only once and allow output types to override input ones.
     type_dict = {}
@@ -607,6 +611,7 @@ cdef tuple _decide_params_type_core(
         in_types.append(a)
 
     type_map = _TypeMap(tuple(sorted(type_dict.items())))
+    print(     "Result:", in_types, out_types, type_map)
     return tuple(in_types), tuple(out_types), type_map
 
 
