@@ -94,6 +94,8 @@ cpdef create_comparison(name, op, doc='', no_complex_dtype=True):
         'out0 = in0 %s in1' % op,
         doc=doc,
         custom_ops=[
+            # Note, mixing right now would cast, but we the code can really do
+            # without (C++ might optimize that away.)
             _Op((np.bytes_, np.bytes_), (np.bool_,), 'out0 = in0 %s in1' % op, None, _s_copy_resolver),
             _Op((np.str_, np.str_), (np.bool_,), 'out0 = in0 %s in1' % op, None, _s_copy_resolver),
             ])
