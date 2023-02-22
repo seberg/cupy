@@ -582,7 +582,11 @@ cdef tuple _decide_params_type_core(
     for p, a in zip(in_params, in_args_dtype):
         if a is None:
             # The parameter is not passed as an array.
-            in_types.append(p.dtype)
+            if p.dtype is not None:
+                in_types.append(p.dtype)
+            else:
+                # the same "ctype" name must have been defined by an input
+                in_types.append(type_dict[p.ctype])
             continue
 
         a = numpy.dtype(a)
