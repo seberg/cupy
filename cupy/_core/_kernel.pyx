@@ -562,8 +562,11 @@ cdef tuple _decide_params_type_core(
                 raise TypeError('Output arguments must be cupy arrays.')
 
             a = numpy.dtype(a)
+            out_types.append(a)
 
-            if p.dtype is not None:
+            if p.dtype is None:
+                type_dict[p.ctype] = a
+            else:
                 p_dtype = get_dtype(p.dtype)
                 if a == p_dtype:
                     ctype = p.ctype
@@ -573,12 +576,6 @@ cdef tuple _decide_params_type_core(
                 else:
                     raise TypeError(
                         'Type is mismatched. %s %s %s' % (p.name, a, p.dtype))
-
-                type_dict[ctype] = a
-            else:
-                type_dict[p.ctype] = a
-
-            out_types.append(a)
 
     assert len(in_params) == len(in_args_dtype)
     in_types = []
@@ -593,22 +590,20 @@ cdef tuple _decide_params_type_core(
             continue
 
         a = numpy.dtype(a)
+        in_types.append(a)
 
-        if p.dtype is not None:
+        if p.dtype is None:
+            type_dict[p.ctype] = a
+        else:
             p_dtype = get_dtype(p.dtype)
             if a == p_dtype:
-                ctype = p.ctype
+                pass
             elif type(a) == type(p_dtype):
                 # a is the same type, but it is parametric (i.e. string length)
-                ctype = _get_typename(a)
+                pass
             else:
                 raise TypeError(
                     'Type is mismatched. %s %s %s' % (p.name, a, p_dtype))
-
-            type_dict[ctype] = p_dtype
-        else:
-            type_dict[p.ctype] = a
-        in_types.append(a)
 
     type_map = _TypeMap(tuple(sorted(type_dict.items())))
     print(     "Result:", in_types, out_types, type_map)
