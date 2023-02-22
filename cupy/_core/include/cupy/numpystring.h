@@ -18,6 +18,17 @@ public:
         return len;
     }
 
+    __host__ __device__ NumPyString () {}
+
+    template<typename OT, int Olen>
+    __host__ __device__ NumPyString (const NumPyString<OT, Olen> &other)
+    {
+        // TODO: This is very unsafe (as it just casts)
+        for (int i = 0; i < this->maxlen; i++) {
+            this->data[i] = other[i];
+        }
+    }
+
     __host__ __device__ T operator[](int i) const {
         /* Allowing too large `i` for easier handling of different length */
         if (i < this->maxlen) {
@@ -37,11 +48,11 @@ public:
     }
 
     template<typename OT, int Olen>
-    __host__ __device__ bool operator==(const NumPyString<OT, Olen> &other)
+    __host__ __device__ bool operator==(const NumPyString<OT, Olen> &other) const
     {
-        int longer = this->maxlen > other->maxlen ? this->maxlen : other->maxlen;
+        int longer = this->maxlen > other.maxlen ? this->maxlen : other.maxlen;
         for (int i = 0; i < longer; i++) {
-            if (this->data[i] != other->data[i]) {
+            if ((*this)[i] != other[i]) {
                 return false;
             }
         }
