@@ -56,11 +56,12 @@ cpdef create_comparison(name, op, doc='', no_complex_dtype=True):
 
     if no_complex_dtype:
         ops = ('??->?', 'bb->?', 'BB->?', 'hh->?', 'HH->?', 'ii->?', 'II->?',
-               'll->?', 'LL->?', 'qq->?', 'QQ->?', 'ee->?', 'ff->?', 'dd->?')
+               'll->?', 'LL->?', 'qq->?', 'QQ->?', 'ee->?', 'ff->?', 'dd->?',
+               'SS->?', 'UU->?')
     else:
         ops = ('??->?', 'bb->?', 'BB->?', 'hh->?', 'HH->?', 'ii->?', 'II->?',
                'll->?', 'LL->?', 'qq->?', 'QQ->?', 'ee->?', 'ff->?', 'dd->?',
-               'FF->?', 'DD->?')
+               'FF->?', 'DD->?', 'SS->?', 'UU->?')
 
     return create_ufunc(
         'cupy_' + name,
