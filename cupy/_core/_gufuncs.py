@@ -192,7 +192,7 @@ class _OpsRegister:
             ops.append(_OpsRegister._Op(ins, outs, op))
         return ops
 
-    def _determine_from_args(self, args):
+    def _determine_from_args(self, args, casting):
         n = len(args)
         in_types = tuple(arg.dtype for arg in args)
         for op in self._ops:
@@ -200,7 +200,7 @@ class _OpsRegister:
             for i in range(n):
                 it = in_types[i]
                 ot = op_types[i]
-                if not numpy.can_cast(it, ot):
+                if not numpy.can_cast(it, ot, casting=casting):
                     break
             else:
                 return op
@@ -264,7 +264,7 @@ class _OpsRegister:
                 raise RuntimeError('dtype with tuple is not yet supported')
             op = self._determine_from_dtype(dtype)
         else:
-            op = self._determine_from_args(args)
+            op = self._determine_from_args(args, casting)
 
         if op is None:
             # Should we allow op to be none?
