@@ -582,8 +582,7 @@ cdef tuple _decide_params_type_core(
     for p, a in zip(in_params, in_args_dtype):
         if a is None:
             # The parameter is not passed as an array.
-            in_types.append(p.ctype)
-            type_dict[p.ctype] = p.ctype
+            in_types.append(p.dtype)
             continue
 
         a = numpy.dtype(a)
@@ -599,7 +598,7 @@ cdef tuple _decide_params_type_core(
                 raise TypeError(
                     'Type is mismatched. %s %s %s' % (p.name, a, p_dtype))
 
-            type_dict[ctype] = a
+            type_dict[ctype] = p_dtype
         else:
             type_dict[p.ctype] = a
         in_types.append(a)
