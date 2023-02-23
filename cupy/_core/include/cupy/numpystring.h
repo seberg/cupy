@@ -29,7 +29,7 @@ public:
     template<typename OT, int Olen>
     __host__ __device__ NumPyString& operator=(const NumPyString<OT, Olen> &other)
     {
-        // TODO: This is very unsafe (as it just casts)
+        // NOTE: Unlike NumPy, we just cast U->S (unsafe).
         for (int i = 0; i < this->maxlen; i++) {
             this->data[i] = other[i];
         }

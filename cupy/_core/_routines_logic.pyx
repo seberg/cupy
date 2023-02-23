@@ -68,7 +68,7 @@ def _fix_to_sctype(dtype, sctype):
     return np.dtype((sctype, length))
 
 
-def _s_copy_resolver(op, arginfo):
+def _s_cmp_resolver(op, arginfo):
     # Support only U->S and S->U casts right now
 
     in1_dtype = _fix_to_sctype(arginfo[0].dtype, op.in_types[0])
@@ -88,17 +88,23 @@ cpdef create_comparison(name, op, doc='', no_complex_dtype=True):
                'll->?', 'LL->?', 'qq->?', 'QQ->?', 'ee->?', 'ff->?', 'dd->?',
                'FF->?', 'DD->?')
 
+    if op == "==":
+        # Define the more complicated string ops, for now only `==`
+        custom_ops=[
+            # Note, mixing right now would cast, but we the code can really do
+            # without (C++ might optimize that away.)
+            _Op((np.bytes_, np.bytes_), (np.bool_,), 'out0 = in0 %s in1' % op, None, _s_cmp_resolver),
+            _Op((np.str_, np.str_), (np.bool_,), 'out0 = in0 %s in1' % op, None, _s_cmp_resolver),
+            ]
+    else:
+        custom_ops = []
+
     return create_ufunc(
         'cupy_' + name,
         ops,
         'out0 = in0 %s in1' % op,
         doc=doc,
-        custom_ops=[
-            # Note, mixing right now would cast, but we the code can really do
-            # without (C++ might optimize that away.)
-            _Op((np.bytes_, np.bytes_), (np.bool_,), 'out0 = in0 %s in1' % op, None, _s_copy_resolver),
-            _Op((np.str_, np.str_), (np.bool_,), 'out0 = in0 %s in1' % op, None, _s_copy_resolver),
-            ])
+        custom_ops=custom_ops)
 
 
 cdef _greater = create_comparison(
