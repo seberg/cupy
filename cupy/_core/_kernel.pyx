@@ -546,11 +546,10 @@ cdef class _TypeMap:
 cdef tuple _decide_params_type_core(
         tuple in_params, tuple out_params, tuple in_args_dtype,
         tuple out_args_dtype):
-    # TODO: This needs work and cleanup.  Right now it may not even be correct.
-    print("_decide_params_type_core", in_params, out_params, in_args_dtype, out_args_dtype)
-    print("----------------")
+    # TODO: This function is pretty complex, and should probably be reorganized
+    #       a little (also to ensure correctness by making it clearer what it
+    #       does)
 
-    # TODO: The logic is still pretty likely a bit broken?!
     # typedef only once and allow output types to override input ones.
     type_dict = {}
     out_types = []
@@ -561,7 +560,7 @@ cdef tuple _decide_params_type_core(
             if a is None:
                 raise TypeError('Output arguments must be cupy arrays.')
 
-            a = numpy.dtype(a)
+            a = numpy.dtype(a) if a != "cudaTextureObject_t" else a
             out_types.append(a)
 
             if p.dtype is None:
@@ -589,7 +588,7 @@ cdef tuple _decide_params_type_core(
                 in_types.append(type_dict[p.ctype])
             continue
 
-        a = numpy.dtype(a)
+        a = numpy.dtype(a) if a != "cudaTextureObject_t" else a
         in_types.append(a)
 
         if p.dtype is None:
@@ -612,7 +611,6 @@ cdef tuple _decide_params_type_core(
                      for p in out_params]
 
     type_map = _TypeMap(tuple(sorted(type_dict.items())))
-    print(     "Result:", in_types, out_types, type_map)
     return tuple(in_types), tuple(out_types), type_map
 
 
