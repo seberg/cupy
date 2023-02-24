@@ -2,6 +2,40 @@
 #define CUPY_NUMPYSTRING_H
 
 
+/* The code below is heavily inspired by the cuDF version */
+template<int maxlen, typename IntT, typename CharT>
+__host__ __device__ void
+integer_to_string(const IntT value, CharT *ptr_orig)
+{
+    /* create temporary char string to flip later */
+    char digits[maxlen];
+
+    bool const is_negative = value < 0;
+    IntT absval = is_negative ? -value : value;
+
+    int digits_idx = 0;
+    do {
+        digits[digits_idx++] = '0' + absval % (IntT)10;
+        // next digit
+        absval = absval / (IntT)10;
+    } while (absval != 0)
+
+    CharT *ptr = ptr_orig;
+    if (is_negative) {
+        *ptr++ = '-';
+    }
+    // digits are backwards, reverse the string into the output
+    while (digits_idx-- > 0) {
+        *ptr++ = digits[digits_idx];
+    }
+
+    /* zero fill unused chunk */
+    for (; ptr < ptr_orig + maxlen; ptr++) {
+        *ptr = 0;
+    }
+}
+
+
 template<typename T, int maxlen_>
 class NumPyString {
 public:
@@ -47,21 +81,10 @@ public:
         return *this;
     }
 
-    template<typename OT, int Olen>
-    __host__ __device__ NumPyString& operator=(const double &other)
+    // TODO: Howto template it for all integers?!
+    __host__ __device__ NumPyString& operator=(const long &value)
     {
-        /* create temporary char string, since we may have a unicode one */
-        const NumPyString<char, this->maxlen> charstr;
-        const char *end = charstr.data + this->maxlen;
-
-        std::to_chars_result res;
-        res = std::to_chars(charstr.data, end, other);
-        /* zero fill unused chunk */
-        for (char *ptr = res.ptr; ptr < end; ptr++) {
-            ptr[i] = 0;
-        }
-
-        *this = charstr;
+        integer_to_string<maxlen_>(value, this->data);
         return *this;
     }
 
@@ -80,3 +103,4 @@ public:
 
 
 #endif  // CUPY_NUMPYSTRING_H
+
