@@ -48,6 +48,24 @@ public:
     }
 
     template<typename OT, int Olen>
+    __host__ __device__ NumPyString& operator=(const double &other)
+    {
+        /* create temporary char string, since we may have a unicode one */
+        const NumPyString<char, this->maxlen> charstr;
+        const char *end = charstr.data + this->maxlen;
+
+        std::to_chars_result res;
+        res = std::to_chars(charstr.data, end, other);
+        /* zero fill unused chunk */
+        for (char *ptr = res.ptr; ptr < end; ptr++) {
+            ptr[i] = 0;
+        }
+
+        *this = charstr;
+        return *this;
+    }
+
+    template<typename OT, int Olen>
     __host__ __device__ bool operator==(const NumPyString<OT, Olen> &other) const
     {
         int longer = this->maxlen > other.maxlen ? this->maxlen : other.maxlen;
