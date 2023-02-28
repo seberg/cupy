@@ -1543,7 +1543,7 @@ cdef class _Op:
         if self.error_func is not None:
             self.error_func()
 
-    cdef tuple resolve_dtypes(self, list in_args, list out_args):
+    cdef tuple resolve_dtypes(self, tuple in_args, tuple out_args):
         # In most cases, this just returns the typical dtypes matching the
         # the dtype kind (or DType class, as of now represented by the scalar).
         # For parametric DTypes, more complex handling may be necessary and

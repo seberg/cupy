@@ -136,10 +136,10 @@ cpdef _resolve_dtype_cast(from_dt, to):
 
     NumPy should make this functionality directly available.
     """
-    if isinstance(to, np.dtype):
+    if isinstance(to, _dtype):
         # If it is not a "flexible instance" (S0 or U0) we just return it,
         # `to` must be the correct choice for the result.
-        if to.itemsize != 0 or not isinstance(_numpy_string_dts):
+        if to.itemsize != 0 or not isinstance(to, _numpy_string_dts):
             return to
         # Otherwise, we may have to find the string length:
         to = type(to)
