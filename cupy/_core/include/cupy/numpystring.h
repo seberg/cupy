@@ -1,14 +1,15 @@
-#ifndef CUPY_NUMPYSTRING_H
-#define CUPY_NUMPYSTRING_H
+#pragma once
 
 
 /* The code below is heavily inspired by the cuDF version */
 template<typename IntT, typename CharT>
-__host__ __device__ void
+__host__ __device__ inline void
 integer_to_string(const IntT value, int strlen, CharT *ptr_orig)
 {
-    /* create temporary char string to flip later */
-    char digits[cuda::std::numeric_limits<IntT>::digits10];
+    /* create large enough temporary char string, also to flip later */
+    // TODO: 21 is large enough for 64bit integers but this should use
+    //       std::numeric_limits or similar?
+    char digits[21];
 
     bool const is_negative = value < 0;
     IntT absval = is_negative ? -value : value;
@@ -33,6 +34,35 @@ integer_to_string(const IntT value, int strlen, CharT *ptr_orig)
     for (; ptr < ptr_orig + strlen; ptr++) {
         *ptr = 0;
     }
+}
+
+
+/* The code below is heavily inspired by the cuDF version */
+template<typename IntT, typename CharT>
+__host__ __device__ inline IntT
+string_to_integer(int strlen, CharT *ptr)
+{
+    IntT value = 0;
+
+    if (strlen == 0) {
+        return value;
+    }
+    int sign = 1;
+    if (*ptr == '-' || *ptr == '+') {
+        sign = (*ptr == '-' ? -1 : 1);
+        ++ptr;
+        --strlen;
+    }
+    for (int idx = 0; idx < strlen; idx++, ptr++) {
+        CharT chr = *ptr;
+        if (chr < '0' || chr > '9') {
+            // TODO: Maybe it would be good to set INT_MIN/UINT_MAX for real
+            //       invalid numbers (at this point could be NULL terminated).
+            break;
+        }
+        value = (value * (IntT)10) + static_cast<IntT>(chr - '0');
+    }
+    return value * sign;
 }
 
 
@@ -81,12 +111,29 @@ public:
         return *this;
     }
 
-    // TODO: Howto template it for all integers?!
+    // TODO: Howto best template it for all integers?!
     __host__ __device__ NumPyString& operator=(const long &value)
     {
         integer_to_string(value, maxlen_, this->data);
         return *this;
     }
+    __host__ __device__ NumPyString& operator=(const long long &value)
+    {
+        integer_to_string(value, maxlen_, this->data);
+        return *this;
+    }
+
+
+    // TODO: Howto best template it for all integers?!
+    __host__ __device__ operator long()
+    {
+        return string_to_integer<long>(maxlen_, this->data);
+    }
+    __host__ __device__ operator long long()
+    {
+        return string_to_integer<long long>(maxlen_, this->data);
+    }
+
 
     template<typename OT, int Olen>
     __host__ __device__ bool operator==(const NumPyString<OT, Olen> &other) const
@@ -100,7 +147,3 @@ public:
         return true;
     }
 };
-
-
-#endif  // CUPY_NUMPYSTRING_H
-

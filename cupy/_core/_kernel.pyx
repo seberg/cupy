@@ -1549,7 +1549,7 @@ cdef class _Op:
         # the dtype kind (or DType class, as of now represented by the scalar).
         # For parametric DTypes, more complex handling may be necessary and
         # can be implemented by providing the resolver function.
-        if self._in_dtypes is not None:
+        if self._resolution_func is None:
             return self._in_dtypes, self._out_dtypes
 
         in_dtypes = []

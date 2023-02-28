@@ -17,8 +17,8 @@ def _fix_to_sctype(dtype, sctype):
 def _s_copy_resolver(op, in_dtypes, out_dtypes):
     # The result must have the same length as the input (it may be cast
     # after the copy no-op)
-    sctype = op.in_types[0]
-    return (in_dtype,), (in_dtype,)
+    return in_dtypes, in_dtypes
+
 
 elementwise_copy = create_ufunc(
     'cupy_copy',
