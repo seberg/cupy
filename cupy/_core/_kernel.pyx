@@ -659,9 +659,6 @@ cdef list _get_out_args_from_optionals(
 ):
     cdef _ndarray_base arr
 
-    while len(out_args) < len(out_types):
-        out_args.append(None)
-
     for i, a in enumerate(out_args):
         if a is None:
             out_args[i] = _ndarray_init(
@@ -674,7 +671,7 @@ cdef list _get_out_args_from_optionals(
         arr = a
         if not internal.vector_equal(arr._shape, out_shape):
             raise ValueError('Out shape is mismatched')
-        out_type = get_dtype(out_types[i])
+        out_type = out_types[i]
 
         _raise_if_invalid_cast(out_type, arr.dtype, casting, "output operand")
     return out_args
@@ -1369,8 +1366,11 @@ cdef class ufunc:
                 template = in_arg
                 break
 
+        core_in_dtypes, core_out_dtypes = op.resolve_dtypes(
+                in_args, out_args)
+
         out_args = _get_out_args_from_optionals(
-            subtype, out_args, op.out_types, shape, casting, template)
+            subtype, out_args, core_out_dtypes, shape, casting, template)
         if self.nout == 1:
             ret = out_args[0]
         else:
@@ -1416,14 +1416,14 @@ cdef class ufunc:
         return '{}__{}'.format(name, '_'.join(inout_type_words))
 
     cdef function.Function _get_ufunc_kernel(
-            self, int dev_id, _Op op, tuple arginfos, bint has_where):
+            self, tuple in_dtypes, tuple out_dtypes,
+            int dev_id, _Op op, tuple arginfos, bint has_where):
         cdef function.Function kern
         key = (dev_id, op, arginfos, has_where)
         kern = self._kernel_memo.get(key, None)
         if kern is None:
             name = self._get_name_with_type(arginfos, has_where)
             params = self._params_with_where if has_where else self._params
-            in_dtypes, out_dtypes = op.resolve_dtypes(arginfos)
             kern = _get_ufunc_kernel(
                 in_dtypes, out_dtypes, op.routine, arginfos, has_where,
                 params, name, self._preamble, self._loop_prep)
@@ -1509,15 +1509,14 @@ cdef class _Op:
         self.nout = len(out_types)
         self.routine = routine
         self.error_func = error_func
+        # Resolution func is typically None (non parametric dtypes) but can
+        # implement more complex logic.
         self._resolution_func = resolution_func
-        if resolution_func is None:
-            self._in_dtypes = tuple([get_dtype(t) for t in in_types])
-            self._out_dtypes = tuple([get_dtype(t) for t in out_types])
-        else:
-            # We need to use the resolution function (dtypes may depend on
-            # input for parametric dtypes like strings).
-            self._in_dtypes = None
-            self._out_dtypes = None
+        self._in_dtypes = tuple([get_dtype(t) for t in in_types])
+        self._out_dtypes = tuple([get_dtype(t) for t in out_types])
+        # For resolution, the DType class is actually imporant:
+        self._in_DType_classes = tuple([type(dt) for dt in self._in_dtypes])
+        self._out_DType_classes = tuple([type(dt) for dt in self._out_dtypes])
 
     @staticmethod
     cdef _Op _from_type_and_routine_or_error_func(
@@ -1544,14 +1543,29 @@ cdef class _Op:
         if self.error_func is not None:
             self.error_func()
 
-    cdef tuple resolve_dtypes(self, tuple arginfos):
+    cdef tuple resolve_dtypes(self, list in_args, list out_args):
         # In most cases, this just returns the typical dtypes matching the
         # the dtype kind (or DType class, as of now represented by the scalar).
         # For parametric DTypes, more complex handling may be necessary and
         # can be implemented by providing the resolver function.
         if self._in_dtypes is not None:
             return self._in_dtypes, self._out_dtypes
-        return self._resolution_func(self, arginfos)
+
+        in_dtypes = []
+        for arg, dt in zip(in_args, self._in_DType_classes):
+            if arginfo[0] is None:
+                in_dtypes.append(None)
+            else:
+                in_dtypes.append(_resolve_dtype_cast(arg.dtyp))
+
+        out_dtypes = []
+        for arg, dt in zip(out_args, self._out_DType_classes):
+            if arginfo[0] is None:
+                out_dtypes.append(None)
+            else:
+                out_dtypes.append(_resolve_dtype_cast(arg.dtyp))
+
+        return self._resolution_func(self, tuple(in_dtypes), tuple(out_dtypes))
 
 
 cdef class _Ops:

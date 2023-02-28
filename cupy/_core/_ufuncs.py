@@ -14,11 +14,11 @@ def _fix_to_sctype(dtype, sctype):
 
     return np.dtype((sctype, length))
 
-def _s_copy_resolver(op, arginfo):
+def _s_copy_resolver(op, in_dtypes, out_dtypes):
     # Support only U->S and S->U casts right now
     sctype = op.in_types[0]
 
-    in_dtype = _fix_to_sctype(arginfo[0].dtype, sctype)
+    in_dtype = _fix_to_sctype(in_dtypes[0], sctype)
     out_dtype = in_dtype  # could call _fix_to_sctype just to sanity check
 
     return (in_dtype,), (out_dtype,)

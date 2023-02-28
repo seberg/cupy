@@ -18,7 +18,7 @@ integer_to_string(const IntT value, CharT *ptr_orig)
         digits[digits_idx++] = '0' + absval % (IntT)10;
         // next digit
         absval = absval / (IntT)10;
-    } while (absval != 0)
+    } while (absval != 0);
 
     CharT *ptr = ptr_orig;
     if (is_negative) {
