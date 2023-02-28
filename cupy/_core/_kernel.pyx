@@ -19,7 +19,8 @@ from cupy.cuda cimport texture
 from cupy._core cimport _accelerator
 from cupy._core cimport _carray
 from cupy._core cimport _scalar
-from cupy._core._dtype cimport get_dtype, _raise_if_invalid_cast
+from cupy._core._dtype cimport (
+        get_dtype, _raise_if_invalid_cast, _resolve_dtype_cast)
 from cupy._core._memory_range cimport may_share_bounds
 from cupy._core._scalar import get_typename as _get_typename
 from cupy._core cimport core
