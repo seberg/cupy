@@ -342,6 +342,9 @@ cdef class _AbstractReductionKernel:
             out_axis = _sort_axis(out_axis, strides)
 
         out_shape = _get_out_shape(a_shape, reduce_axis, out_axis, keepdims)
+
+        if not out_args:
+            out_args = [None]
         out_args = self._get_out_args(out_args, out_types, out_shape)
         ret = out_args[0]
         if ret.size == 0:
@@ -623,6 +626,8 @@ cdef class _SimpleReductionKernel(_AbstractReductionKernel):
             self.name, self._routine_cache, in_args, dtype, self._ops)
         map_expr, reduce_expr, post_map_expr, reduce_type = op.routine
 
+        # Note: In principle we need to call op.resolve_dtypes, but in
+        #       practice reductions do not exist for parametric dtypes.
         if reduce_type is None:
             reduce_type = _get_typename(op.out_types[0])
 

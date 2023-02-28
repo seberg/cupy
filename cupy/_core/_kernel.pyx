@@ -1301,6 +1301,10 @@ cdef class ufunc:
                     raise ValueError("'out' must be a tuple of arrays")
                 out_args = out,
 
+        # Normalize outputs to a tuple of Nones:
+        if len(out_args) < self.nout:
+            out_args += (None,) * (self.nout - len(out_args))
+
         dev_id = device.get_device_id()
         in_args = _preprocess_args(dev_id, in_args, False)
         out_args = _preprocess_optional_args(dev_id, out_args, False)
