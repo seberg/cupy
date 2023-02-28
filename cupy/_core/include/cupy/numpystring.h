@@ -3,12 +3,12 @@
 
 
 /* The code below is heavily inspired by the cuDF version */
-template<int maxlen, typename IntT, typename CharT>
+template<typename IntT, typename CharT>
 __host__ __device__ void
-integer_to_string(const IntT value, CharT *ptr_orig)
+integer_to_string(const IntT value, int strlen, CharT *ptr_orig)
 {
     /* create temporary char string to flip later */
-    char digits[maxlen];
+    char digits[cuda::std::numeric_limits<IntT>::digits10];
 
     bool const is_negative = value < 0;
     IntT absval = is_negative ? -value : value;
@@ -25,12 +25,12 @@ integer_to_string(const IntT value, CharT *ptr_orig)
         *ptr++ = '-';
     }
     // digits are backwards, reverse the string into the output
-    while (digits_idx-- > 0) {
+    while (digits_idx-- > 0 && strlen-- > 0) {
         *ptr++ = digits[digits_idx];
     }
 
     /* zero fill unused chunk */
-    for (; ptr < ptr_orig + maxlen; ptr++) {
+    for (; ptr < ptr_orig + strlen; ptr++) {
         *ptr = 0;
     }
 }
@@ -84,7 +84,7 @@ public:
     // TODO: Howto template it for all integers?!
     __host__ __device__ NumPyString& operator=(const long &value)
     {
-        integer_to_string<maxlen_>(value, this->data);
+        integer_to_string(value, maxlen_, this->data);
         return *this;
     }
 

@@ -566,6 +566,7 @@ cdef class _ndarray_base:
         order_char = internal._update_order_char(
             self._c_contiguous, self._f_contiguous, order_char)
 
+        dtype = _dtype._resolve_dtype_cast(self.dtype, dtype)
         if order_char == b'K':
             strides = internal._get_strides_for_order_K(self, dtype)
             newarray = _ndarray_init(ndarray, self._shape, dtype, None)
