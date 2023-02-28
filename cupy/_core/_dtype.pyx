@@ -127,7 +127,7 @@ cpdef void _raise_if_invalid_cast(
 
 
 # TODO(sebeg): I need to make this resolution available on the NumPy side.
-cdef tuple _numpy_string_dts = (type(np.dtype("S")), type(np.dtype("U")))
+cdef tuple _numpy_string_dts = (type(numpy.dtype("S")), type(numpy.dtype("U")))
 
 cpdef _resolve_dtype_cast(from_dt, to):
     """
@@ -148,7 +148,7 @@ cpdef _resolve_dtype_cast(from_dt, to):
         return from_dt
 
     if to in _numpy_string_dts:
-        res = np.promote_types(from_dt, to.type)
+        res = numpy.promote_types(from_dt, to.type)
         if not isinstance(res, to):
             raise TypeError(f"Unable to cast dtype '{from_dt}' to {to}.")
         return res
