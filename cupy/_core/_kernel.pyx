@@ -7,7 +7,6 @@ import cupy
 from cupy.cuda import compiler
 from cupy import _util
 
-cimport cpython  # NOQA
 cimport cython  # NOQA
 
 from libcpp cimport vector
@@ -1395,7 +1394,8 @@ cdef class ufunc:
         inout_args.append(indexer)
         arginfos = _get_arginfos(inout_args)
 
-        kern = self._get_ufunc_kernel(dev_id, op, arginfos, has_where)
+        kern = self._get_ufunc_kernel(
+            core_in_dtypes, core_out_dtypes, dev_id, op, arginfos, has_where)
 
         kern.linear_launch(indexer.size, inout_args)
         return ret
@@ -1544,7 +1544,7 @@ cdef class _Op:
         if self.error_func is not None:
             self.error_func()
 
-    cdef tuple resolve_dtypes(self, tuple in_args, tuple out_args):
+    cdef tuple resolve_dtypes(self, list in_args, list out_args):
         # In most cases, this just returns the typical dtypes matching the
         # the dtype kind (or DType class, as of now represented by the scalar).
         # For parametric DTypes, more complex handling may be necessary and
@@ -1554,17 +1554,17 @@ cdef class _Op:
 
         in_dtypes = []
         for arg, dt in zip(in_args, self._in_DType_classes):
-            if arginfo[0] is None:
+            if arg is None:
                 in_dtypes.append(None)
             else:
-                in_dtypes.append(_resolve_dtype_cast(arg.dtyp))
+                in_dtypes.append(_resolve_dtype_cast(arg.dtype, dt))
 
         out_dtypes = []
         for arg, dt in zip(out_args, self._out_DType_classes):
-            if arginfo[0] is None:
+            if arg is None:
                 out_dtypes.append(None)
             else:
-                out_dtypes.append(_resolve_dtype_cast(arg.dtyp))
+                out_dtypes.append(_resolve_dtype_cast(arg.dtype, dt))
 
         return self._resolution_func(self, tuple(in_dtypes), tuple(out_dtypes))
 
