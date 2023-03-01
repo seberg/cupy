@@ -71,9 +71,11 @@ cdef class _ArgInfo:
 
     cdef bint is_scalar(self)
 
-    cdef str get_c_type(self)
+    cdef tuple get_c_type(self)
 
     cdef str get_param_c_type(self, ParameterInfo p)
+
+    cdef tuple get_param_c_type_with_preamble(self, ParameterInfo p)
 
     cdef str get_c_var_name(self, ParameterInfo p)
 

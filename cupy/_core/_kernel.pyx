@@ -306,28 +306,38 @@ cdef class _ArgInfo:
     cdef bint is_scalar(self):
         return self.arg_kind == ARG_KIND_SCALAR
 
-    cdef str get_c_type(self):
+    cdef tuple get_c_type(self):
         # Returns the C type representation.  Does not add preamble, this is
         # the job of the caller to ensure it already is/was added.
         if self.arg_kind == ARG_KIND_NDARRAY:
-            return 'CArray<%s, %d, %d, %d>' % (
-                _get_typename_with_preamble(self.dtype)[0], self.ndim,
-                self.c_contiguous, self.index_32_bits)
+            name, preamble = _get_typename_with_preamble(self.dtype)
+            name = 'CArray<%s, %d, %d, %d>' % (
+                name, self.ndim, self.c_contiguous, self.index_32_bits)
+            return name, preamble
         if self.arg_kind == ARG_KIND_SCALAR:
-            return _get_typename(self.dtype)
+            return _get_typename_with_preamble(self.dtype)
         if self.arg_kind == ARG_KIND_INDEXER:
-            return 'CIndexer<%d, %d>' % (self.ndim, self.index_32_bits)
+            return 'CIndexer<%d, %d>' % (self.ndim, self.index_32_bits), ""
         if self.arg_kind == ARG_KIND_TEXTURE:
-            return 'cudaTextureObject_t'
+            return 'cudaTextureObject_t', ""
         assert False
 
     cdef str get_param_c_type(self, ParameterInfo p):
+        cdef str ctyp, preamble
+        ctyp, preamble = self.get_param_c_type_with_preamble(p)
+        if preamble:
+            # Some code paths will not use the preamble.  In most cases that is
+            # probably not relevant, but when it is they can be updated.
+            raise TypeError(f"Compiling for '{ctyp}' not possible here.")
+
+    cdef tuple get_param_c_type_with_preamble(self, ParameterInfo p):
         # Returns the C type representation in the global function's
         # parameter list.
-        cdef str ctyp = self.get_c_type()
+        cdef str ctyp, preamble
+        ctyp, preamble = self.get_c_type()
         if p.is_const:
-            return 'const ' + ctyp
-        return ctyp
+            return 'const ' + ctyp, preamble
+        return ctyp, preamble
 
     cdef str get_c_var_name(self, ParameterInfo p):
         if self.arg_kind in (ARG_KIND_NDARRAY, ARG_KIND_POINTER) and not p.raw:
@@ -347,12 +357,11 @@ cdef tuple _get_kernel_params(tuple params, tuple arginfos):
     preamble = []
     for i in range(len(params)):
         p = params[i]
-        if p.preamble:
-            preamble.append(p.preamble)
         arginfo = arginfos[i]
-        lst.append('{} {}'.format(
-            arginfo.get_param_c_type(p),
-            arginfo.get_c_var_name(p)))
+        name, arg_preamble = arginfo.get_param_c_type_with_preamble(p)
+        if arg_preamble:
+            preamble.append(arg_preamble)
+        lst.append('{} {}'.format(name, arginfo.get_c_var_name(p)))
     return "\n".join(preamble), ', '.join(lst)
 
 
@@ -747,6 +756,8 @@ def _get_elementwise_kernel_code(
             else:
                 fmt = '{t} &{n} = _raw_{n}[_ind.get()];'
             op.append(fmt.format(t=p.ctype, n=p.name))
+            if p.preamble:
+                preamble += p.preamble + "\n"
     op.append(operation)
     operation = '\n'.join(op)
     return _get_simple_elementwise_kernel_code(
