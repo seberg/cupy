@@ -329,6 +329,7 @@ cdef class _ArgInfo:
             # Some code paths will not use the preamble.  In most cases that is
             # probably not relevant, but when it is they can be updated.
             raise TypeError(f"Compiling for '{ctyp}' not possible here.")
+        return ctyp
 
     cdef tuple get_param_c_type_with_preamble(self, ParameterInfo p):
         # Returns the C type representation in the global function's
@@ -736,7 +737,7 @@ cdef list _get_out_args_with_params(
             out_args[i] = _ndarray_init(
                     cupy.ndarray, out_shape, out_types[i], None)
             continue
-        elif not isinstance(a, _ndarray_base):
+        if not isinstance(a, _ndarray_base):
             raise TypeError(
                 'Output arguments type must be cupy.ndarray')
         arr = a
