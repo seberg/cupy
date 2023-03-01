@@ -49,6 +49,8 @@ cpdef str _create_reduction_function_code(
         name, block_size, reduce_type, params, arginfos, identity,
         pre_map_expr, reduce_expr, post_map_expr,
         _kernel._TypeMap type_map, input_expr, output_expr, preamble, options):
+    params_preamble, params_sig = _kernel._get_kernel_params(params, arginfos)
+
     # A (incomplete) list of internal variables:
     # _J            : the index of an element in the array
     # _block_size   : the number of threads in a block; should be power of 2
@@ -57,6 +59,7 @@ cpdef str _create_reduction_function_code(
 
     module_code = string.Template('''
 ${type_preamble}
+${params_preamble}
 ${preamble}
 #define REDUCE(a, b) (${reduce_expr})
 #define POST_MAP(a) (${post_map_expr})
@@ -112,7 +115,8 @@ extern "C" __global__ void ${name}(${params}) {
         name=name,
         block_size=block_size,
         reduce_type=reduce_type,
-        params=_kernel._get_kernel_params(params, arginfos),
+        params_preamble=params_preamble,
+        params=params_sig,
         identity=identity,
         reduce_expr=reduce_expr,
         pre_map_expr=pre_map_expr,

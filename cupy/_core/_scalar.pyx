@@ -65,28 +65,37 @@ cdef object _numpy_float_ = numpy.float_
 cdef object _numpy_complex_ = numpy.complex_
 
 
-cpdef str get_typename(dtype):
-    # TODO(seberg): Maybe it would make sense to return additional includes
-    #               here to allow almost arbitray extension in the future?
-    # TODO(seberg): By default reject strings as they will lead to errors?
+cpdef tuple get_typename_with_preamble(dtype):
     if dtype is None:
         raise ValueError('dtype is None')
 
     if dtype in _typenames:
-        return _typenames[dtype]
+        return _typenames[dtype], ""
 
     dtype = _dtype.get_dtype(dtype)
 
     if dtype.type in _typenames:
-        return _typenames[dtype.type]
+        return _typenames[dtype.type], ""
 
     # TODO: Are these the best names for char8_t and char32_t to use?
     if dtype.char == "S":
-        return f"NumPyString<unsigned char, {dtype.itemsize}>"
+        name = f"NumPyString<unsigned char, {dtype.itemsize}>"
+        return name, '#include "cupy/numpystring.h"'
     else:
-        return f"NumPyString<unsigned int, {dtype.itemsize // 4}>"
+        name = f"NumPyString<unsigned int, {dtype.itemsize // 4}>"
+        return name, '#include "cupy/numpystring.h"'
 
     raise TypeError(f"Cannot compile for dtype '{dtype}'")
+
+
+cpdef str get_typename(dtype):
+    name, preamble = get_typename_with_preamble(dtype)
+    if preamble:
+        # Some code paths will not use the preamble.  In most cases that is
+        # probably not relevant, but when it is they can be updated.
+        raise TypeError(f"Compiling for dtype '{dtype}' not possible here.")
+
+    return name
 
 
 cdef dict _typenames = {}

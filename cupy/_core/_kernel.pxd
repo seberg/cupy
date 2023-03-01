@@ -12,6 +12,7 @@ cdef class ParameterInfo:
     cdef:
         readonly str name
         readonly object dtype
+        readonly str preamble
         readonly str ctype
         readonly bint raw
         readonly bint is_const
@@ -155,7 +156,7 @@ cpdef create_ufunc(name, ops, routine=*, preamble=*, doc=*,
 
 cdef tuple _get_arginfos(list args)
 
-cdef str _get_kernel_params(tuple params, tuple arginfos)
+cdef tuple _get_kernel_params(tuple params, tuple arginfos)
 
 cdef list _broadcast(list args, tuple params, bint use_size, shape_t& shape)
 

@@ -2097,7 +2097,6 @@ cdef list cupy_header_list = [
     'cupy/carray.cuh',
     'cupy/atomics.cuh',
     'cupy/math_constants.h',
-    'cupy/numpystring.h',
 ]
 if _is_hip:
     cupy_header_list.append('cupy/hip_workaround.cuh')

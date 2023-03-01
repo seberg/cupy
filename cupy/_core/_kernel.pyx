@@ -21,7 +21,9 @@ from cupy._core cimport _scalar
 from cupy._core._dtype cimport (
         get_dtype, _raise_if_invalid_cast, _resolve_dtype_cast)
 from cupy._core._memory_range cimport may_share_bounds
-from cupy._core._scalar import get_typename as _get_typename
+from cupy._core._scalar import (
+        get_typename as _get_typename,
+        get_typename_with_preamble as _get_typename_with_preamble)
 from cupy._core cimport core
 from cupy._core.core cimport _convert_object_with_cuda_array_interface
 from cupy._core.core cimport _ndarray_init
@@ -54,9 +56,12 @@ def _get_warpsize():
 cdef str _get_simple_elementwise_kernel_code(
         tuple params, tuple arginfos, str operation, str name,
         _TypeMap type_map, str preamble, str loop_prep='', str after_loop=''):
+    params_preamble, params_sig = _get_kernel_params(params, arginfos)
+
     # No loop unrolling due to avoid 64-bit division
     module_code = string.Template('''
     ${typedef_preamble}
+    ${params_preamble}
     ${preamble}
     extern "C" __global__ void ${name}(${params}) {
       ${loop_prep};
@@ -69,7 +74,8 @@ cdef str _get_simple_elementwise_kernel_code(
     }
     ''').substitute(
         typedef_preamble=type_map.get_typedef_code(),
-        params=_get_kernel_params(params, arginfos),
+        params_preamble=params_preamble,
+        params=params_sig,
         operation=operation,
         name=name,
         preamble=preamble,
@@ -301,10 +307,11 @@ cdef class _ArgInfo:
         return self.arg_kind == ARG_KIND_SCALAR
 
     cdef str get_c_type(self):
-        # Returns the C type representation.
+        # Returns the C type representation.  Does not add preamble, this is
+        # the job of the caller to ensure it already is/was added.
         if self.arg_kind == ARG_KIND_NDARRAY:
             return 'CArray<%s, %d, %d, %d>' % (
-                _get_typename(self.dtype), self.ndim,
+                _get_typename_with_preamble(self.dtype)[0], self.ndim,
                 self.c_contiguous, self.index_32_bits)
         if self.arg_kind == ARG_KIND_SCALAR:
             return _get_typename(self.dtype)
@@ -332,18 +339,21 @@ cdef tuple _get_arginfos(list args):
     return tuple([_ArgInfo.from_arg(a) for a in args])
 
 
-cdef str _get_kernel_params(tuple params, tuple arginfos):
+cdef tuple _get_kernel_params(tuple params, tuple arginfos):
     cdef ParameterInfo p
     cdef _ArgInfo arginfo
     assert len(params) == len(arginfos)
     lst = []
+    preamble = []
     for i in range(len(params)):
         p = params[i]
+        if p.preamble:
+            preamble.append(p.preamble)
         arginfo = arginfos[i]
         lst.append('{} {}'.format(
             arginfo.get_param_c_type(p),
             arginfo.get_c_var_name(p)))
-    return ', '.join(lst)
+    return "\n".join(preamble), ', '.join(lst)
 
 
 cdef shape_t _reduce_dims(list args, tuple params, const shape_t& shape):
@@ -453,6 +463,7 @@ cdef class ParameterInfo:
     def __init__(self, str param, bint is_const):
         self.name = None
         self.dtype = None
+        self.preamble = ""
         self.ctype = None
         self.raw = False
         self.is_const = is_const
@@ -470,7 +481,7 @@ cdef class ParameterInfo:
             self.dtype = dtype.type
             if dtype.name != t:
                 raise ValueError('Wrong type %s' % t)
-            self.ctype = _get_typename(self.dtype)
+            self.ctype, self.preamble = _get_typename_with_preamble(self.dtype)
 
         for i in s[:-2]:
             if i == 'raw':
@@ -538,9 +549,15 @@ cdef class _TypeMap:
 
     cdef str get_typedef_code(self):
         # Returns a code fragment of typedef statements used as preamble.
-        return ''.join([
-            'typedef %s %s;\n' % (_get_typename(ctype2), ctype1)
-            for ctype1, ctype2 in self._pairs])
+        cdef str name, preamble
+        cdef list typedefs = []
+        for code_name, dtype in self._pairs:
+            name, preamble = _get_typename_with_preamble(dtype)
+            if preamble:
+                typedefs.append(f"{preamble}\ntypedef {name} {code_name};\n")
+            else:
+                typedefs.append(f"typedef {name} {code_name};\n")
+        return ''.join(typedefs)
 
 
 cdef tuple _decide_params_type_core(
