@@ -24,6 +24,7 @@ integer_to_string(const IntT value, int strlen, CharT *ptr_orig)
     CharT *ptr = ptr_orig;
     if (is_negative) {
         *ptr++ = '-';
+        strlen--;
     }
     // digits are backwards, reverse the string into the output
     while (digits_idx-- > 0 && strlen-- > 0) {
@@ -31,8 +32,8 @@ integer_to_string(const IntT value, int strlen, CharT *ptr_orig)
     }
 
     /* zero fill unused chunk */
-    for (; ptr < ptr_orig + strlen; ptr++) {
-        *ptr = 0;
+    while (strenlen--) {
+        *ptr++ = 0;
     }
 }
 
