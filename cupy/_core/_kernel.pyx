@@ -732,7 +732,11 @@ cdef list _get_out_args_with_params(
 
     for i, p in enumerate(out_params):
         a = out_args[i]
-        if not isinstance(a, _ndarray_base):
+        if a is None:
+            out_args[i] = _ndarray_init(
+                    cupy.ndarray, out_shape, out_types[i], None)
+            continue
+        elif not isinstance(a, _ndarray_base):
             raise TypeError(
                 'Output arguments type must be cupy.ndarray')
         arr = a
