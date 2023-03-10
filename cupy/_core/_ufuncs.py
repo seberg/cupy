@@ -14,6 +14,7 @@ def _fix_to_sctype(dtype, sctype):
 
     return np.dtype((sctype, length))
 
+
 def _s_copy_resolver(op, in_dtypes, out_dtypes):
     # The result must have the same length as the input (it may be cast
     # after the copy no-op)
