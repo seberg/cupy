@@ -406,8 +406,24 @@ cdef class _ndarray_base:
         return (dldevice.device_type, dldevice.device_id)
 
     def __getbuffer__(self, Py_buffer* buf, int flags):
+        cdef Py_buffer_extended *buf_ext
+        cdef CUDADeviceInfo *device_info
+
         # TODO(leofang): use flags
-        if (not is_ump_supported(self.data.device_id)
+        buf.internal = NULL
+        if flags & (1 << 9):
+            buf_ext = <Py_buffer_extended *>buf
+            buf_ext.ext_flags = 1 << 9
+            buf_ext.device = "CUDA"
+
+            device_info = <CUDADeviceInfo *>(&buf_ext.device_info)
+            device_info.event = runtime.eventCreateWithFlags(0)  # TODO: Flags?
+            runtime.eventRecord(device_info.event, stream_module.get_current_stream_ptr())
+            # Make sure we know that we need to clean up the event (and re-sync)
+            # since we can't see from `buf` alone (yet!) if it is extended
+            buf.internal = <void *>device_info.event
+            # TODO: If something fails below, cleanup is incorrect...
+        elif (not is_ump_supported(self.data.device_id)
                 or not self.is_host_accessible()):
             raise TypeError(
                 'Accessing a CuPy ndarry on CPU is not allowed except when '
@@ -417,8 +433,7 @@ cdef class _ndarray_base:
         populate_format(buf, self.dtype.char)
         buf.buf = <void*><intptr_t>self.data.ptr
         buf.itemsize = self.dtype.itemsize
-        buf.len = self.size
-        buf.internal = NULL
+        buf.len = self.size * self.dtype.itemsize
         buf.readonly = 0  # TODO(leofang): use flags
         cdef int n, ndim
         ndim = self._shape.size()
@@ -434,9 +449,16 @@ cdef class _ndarray_base:
         buf.obj = self
         cpython.Py_INCREF(self)
 
-        stream_module.get_current_stream().synchronize()
+        if not flags & (1 << 9):
+            stream_module.get_current_stream().synchronize()
 
     def __releasebuffer__(self, Py_buffer* buf):
+        if buf.internal != NULL:
+            # This was an extended buf and buf.internal is an event.
+            runtime.streamWaitEvent(
+                stream_module.get_current_stream_ptr(), <intptr_t>buf.internal)
+            runtime.eventDestroy(<intptr_t>buf.internal)
+
         stdlib.free(buf.shape)  # frees both shape & strides
         cpython.Py_DECREF(self)
 

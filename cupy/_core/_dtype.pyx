@@ -129,22 +129,22 @@ cpdef void _raise_if_invalid_cast(
 
 
 cdef dict dtype_format = {
-    intern("?"): intern("?"),
-    intern("b"): intern("b"),
-    intern("h"): intern("h"),
-    intern("i"): intern("i"),
-    intern("l"): intern("l"),
-    intern("q"): intern("q"),
-    intern("B"): intern("B"),
-    intern("H"): intern("H"),
-    intern("I"): intern("I"),
-    intern("L"): intern("L"),
-    intern("Q"): intern("Q"),
-    intern("e"): intern("e"),
-    intern("f"): intern("f"),
-    intern("d"): intern("d"),
-    intern("F"): intern("Zf"),
-    intern("D"): intern("Zd"),
+    intern("?"): b"?",
+    intern("b"): b"b",
+    intern("h"): b"h",
+    intern("i"): b"i",
+    intern("l"): b"l",
+    intern("q"): b"q",
+    intern("B"): b"B",
+    intern("H"): b"H",
+    intern("I"): b"I",
+    intern("L"): b"L",
+    intern("Q"): b"Q",
+    intern("e"): b"e",
+    intern("f"): b"f",
+    intern("d"): b"d",
+    intern("F"): b"Zf",
+    intern("D"): b"Zd",
 }
 
 

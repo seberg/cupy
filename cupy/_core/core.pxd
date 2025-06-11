@@ -1,3 +1,4 @@
+from libc.stdint cimport intptr_t
 from libcpp cimport vector
 from cupy.cuda cimport memory
 
@@ -5,6 +6,34 @@ from cupy.cuda.function cimport CPointer
 from cupy.cuda.function cimport Module
 from cupy._core._carray cimport shape_t
 from cupy._core._carray cimport strides_t
+
+from cpython cimport Py_buffer
+
+
+cdef extern from *:
+    r"""
+    typedef struct  {
+        Py_buffer buf;
+        int ext_flags;
+        const char *device;
+        size_t device_info[3];
+    } Py_buffer_extended;
+
+
+    typedef struct  {
+        intptr_t event;
+        int device_id;
+    } CUDADeviceInfo;
+    """
+    ctypedef struct Py_buffer_extended:
+        Py_buffer buf
+        int ext_flags
+        const char *device
+        size_t device_info[3]
+
+    ctypedef struct CUDADeviceInfo:
+        intptr_t event
+        int device_id
 
 
 cdef class _ndarray_base:
