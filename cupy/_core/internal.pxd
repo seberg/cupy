@@ -1,3 +1,5 @@
+cimport cython
+
 from libcpp cimport bool as cpp_bool
 from libcpp cimport vector
 from libc.stdint cimport uint16_t
@@ -27,9 +29,6 @@ cdef void get_reduced_dims(
 cdef Py_ssize_t get_contiguous_strides_inplace(
     const shape_t& shape, strides_t& strides,
     Py_ssize_t itemsize, bint is_c_contiguous, bint zeros_for_zerosize)
-
-cpdef bint get_c_contiguity(
-    shape_t& shape, strides_t& strides, Py_ssize_t itemsize)
 
 cpdef shape_t infer_unknown_dimension(
     const shape_t& shape, Py_ssize_t size) except *
@@ -68,3 +67,50 @@ cpdef tuple _broadcast_shapes(shapes)
 cdef bint _is_layout_expected(
     const bint c_contiguous, const bint f_contiguous,
     expected_order) except*
+
+
+@cython.profile(False)
+cpdef inline bint get_c_contiguity(
+        shape_t& shape, strides_t& strides, Py_ssize_t itemsize) except -1:
+
+    cdef Py_ssize_t i, ndim, sh, expected_stride
+
+    expected_stride = itemsize
+    ndim = strides.size()
+
+    for i in range(ndim, 0, -1):
+        sh = shape[i]
+        if sh == 0:
+            return True  # empty array is always contiguos
+        elif sh == 1:
+            continue  # no effect on contiguity
+        elif expected_stride != strides[i]:
+            return False
+
+        expected_stride *= sh
+
+    return True
+
+
+@cython.profile(False)
+cdef inline bint get_f_contiguity(
+        shape_t& shape, strides_t& strides, Py_ssize_t itemsize) except -1:
+
+    cdef Py_ssize_t i, ndim, sh, expected_stride
+
+    expected_stride = itemsize
+    ndim = strides.size()
+
+    # Same logic as above, but not in reverse order for f-contiguity
+    for i in range(ndim):
+        sh = shape[i]
+        if sh == 0:
+            return True  # empty array is always contiguos
+        elif sh == 1:
+            continue  # no effect on contiguity
+        elif expected_stride != strides[i]:
+            return False
+
+        expected_stride *= sh
+
+    return True

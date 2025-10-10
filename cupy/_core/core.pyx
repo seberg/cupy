@@ -2088,30 +2088,12 @@ cdef class _ndarray_base:
         return self._view(type(self), shape, strides, False, True, self)
 
     cpdef _update_c_contiguity(self):
-        if self.size == 0:
-            self._c_contiguous = True
-            return
         self._c_contiguous = internal.get_c_contiguity(
             self._shape, self._strides, self.dtype.itemsize)
 
     cpdef _update_f_contiguity(self):
-        if self.size == 0:
-            self._f_contiguous = True
-            return
-        cdef Py_ssize_t i, count
-        cdef shape_t rev_shape
-        cdef strides_t rev_strides
-        if self._c_contiguous:
-            count = 0
-            for i in self._shape:
-                if i == 1:
-                    count += 1
-            self._f_contiguous = (<Py_ssize_t>self._shape.size()) - count <= 1
-            return
-        rev_shape.assign(self._shape.rbegin(), self._shape.rend())
-        rev_strides.assign(self._strides.rbegin(), self._strides.rend())
-        self._f_contiguous = internal.get_c_contiguity(
-            rev_shape, rev_strides, self.dtype.itemsize)
+        self._f_contiguous = internal.get_f_contiguity(
+            self._shape, self._strides, self.dtype.itemsize)
 
     cpdef _update_contiguity(self):
         self._update_c_contiguity()

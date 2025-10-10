@@ -162,28 +162,6 @@ cdef inline Py_ssize_t get_contiguous_strides_inplace(
 
 
 @cython.profile(False)
-cpdef inline bint get_c_contiguity(
-        shape_t& shape, strides_t& strides, Py_ssize_t itemsize):
-    cdef Py_ssize_t i, prev_i, ndim, sh, st, index
-    ndim = strides.size()
-    if ndim == 0 or (ndim == 1 and strides[0] == itemsize):
-        return True
-    prev_i = -1
-    index = st = 0
-    for i in range(ndim):
-        sh = shape[i]
-        if sh == 0:
-            return True
-        if sh == 1:
-            continue
-        st = strides[i]
-        if prev_i == -1 or strides[prev_i] != sh * st:
-            index += 1
-        prev_i = i
-    return index == 0 or (index == 1 and st == itemsize)
-
-
-@cython.profile(False)
 cpdef shape_t infer_unknown_dimension(
         const shape_t& shape, Py_ssize_t size) except *:
     cdef shape_t ret = shape
