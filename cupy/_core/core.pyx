@@ -163,14 +163,12 @@ class ndarray(_ndarray_base):
     __module__ = 'cupy'
     __slots__ = []
 
-    def __new__(cls, *args, _obj=None, _no_init=False, **kwargs):
-        x = super().__new__(cls, *args, **kwargs)
-        if _no_init:
-            return x
-        x._init(*args, **kwargs)
-        if cls is not ndarray:
-            x.__array_finalize__(_obj)
-        return x
+    def __cinit__(self, shape, dtype=float, memptr=None, strides=None,
+                  order='C', *, _obj=None):
+        self._init(shape, dtype, memptr, strides, order)
+        if type(self) is not ndarray:
+            self.__array_finalize__(_obj)
+        return self
 
     def __init__(self, *args, **kwargs):
         # Prevent from calling the super class `_ndarray_base.__init__()` as
@@ -2161,7 +2159,10 @@ cdef class _ndarray_base:
         cdef _ndarray_base v
         # Use `_no_init=True` to skip recomputation of contiguity. Now
         # calling `__array_finalize__` is responsibility of this method.`
-        v = ndarray.__new__(subtype, _obj=obj, _no_init=True)
+        if subtype is ndarray:
+            v = _ndarray_base.__new__(_ndarray_base)
+        else:
+            v = _ndarray_base.__new__(subtype)  # unlikely, but support it
         v.data = self.data
         v.base = self.base if self.base is not None else self
         v.dtype = self.dtype
@@ -3046,7 +3047,7 @@ cpdef _ndarray_base _convert_object_with_cuda_array_interface(a):
 cdef _ndarray_base _ndarray_init(subtype, const shape_t& shape, dtype, obj):
     # Use `_no_init=True` for fast init. Now calling `__array_finalize__` is
     # responsibility of this function.
-    cdef _ndarray_base ret = ndarray.__new__(subtype, _obj=obj, _no_init=True)
+    cdef _ndarray_base ret = _ndarray_base.__new__(subtype)
     ret._init_fast(shape, dtype, True)
     if subtype is not ndarray:
         ret.__array_finalize__(obj)
@@ -3064,7 +3065,7 @@ cdef _ndarray_base _create_ndarray_from_shape_strides(
         elif strides[i] < 0:
             begin += strides[i] * (shape[i] - 1)
     ptr = memory.alloc(end - begin) + begin
-    return ndarray.__new__(
+    return ndarray(
         subtype, shape, dtype, _obj=obj, memptr=ptr, strides=strides)
 
 
