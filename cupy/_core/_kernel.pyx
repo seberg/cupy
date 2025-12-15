@@ -11,6 +11,7 @@ cimport cython  # NOQA
 
 from libcpp cimport vector
 
+from cupy._util cimport ExactlyOnceDict
 from cupy.cuda cimport device
 from cupy.cuda cimport function
 from cupy.cuda cimport memory
@@ -695,7 +696,6 @@ def _get_elementwise_kernel_code(
         preamble, loop_prep, after_loop)
 
 
-@_util.memoize(for_each_device=True)
 def _get_elementwise_kernel(
         tuple arginfos, _TypeMap type_map,
         tuple params, str operation, str name,
@@ -763,7 +763,7 @@ cdef class ElementwiseKernel:
         readonly bint return_tuple
         readonly dict kwargs
         readonly dict _params_type_memo
-        readonly dict _elementwise_kernel_memo
+        readonly ExactlyOnceDict _elementwise_kernel_memo
         readonly dict _cached_codes
 
     def __init__(self, in_params, out_params, operation,
@@ -792,7 +792,7 @@ cdef class ElementwiseKernel:
         names = [p.name for p in self.in_params + self.out_params]
         if 'i' in names:
             raise ValueError('Can not use \'i\' as a parameter name')
-        self._elementwise_kernel_memo = {}
+        self._elementwise_kernel_memo = ExactlyOnceDict()
         # This is for profiling mechanisms to auto infer a name
         self.__name__ = name
 
@@ -912,7 +912,7 @@ cdef class ElementwiseKernel:
         self._params_type_memo[key] = ret
         return ret
 
-    cpdef function.Function _get_elementwise_kernel(
+    cdef function.Function _get_elementwise_kernel(
             self, int dev_id, tuple arginfos, _TypeMap type_map):
         key = (
             dev_id,
@@ -921,13 +921,16 @@ cdef class ElementwiseKernel:
         kern = self._elementwise_kernel_memo.get(key, None)
         if kern is not None:
             return kern
-        kern = _get_elementwise_kernel(
-            arginfos, type_map, self.params, self.operation,
-            self.name, self.preamble, **self.kwargs)
 
-        # Store the compiled kernel in the cache.
-        # Potentially overwrite a duplicate cache entry because
-        # _get_elementwise_kernel() may include IO wait.
+        # Ensure kernel is compiled and store if it wasn't.
+        kern = self._elementwise_kernel_memo.setdefault_once(
+            key,
+            lambda: _get_elementwise_kernel(
+                arginfos, type_map, self.params, self.operation,
+                self.name, self.preamble, **self.kwargs),
+        )
+
+        # Additionally, store the code, just for debugging purpose.
         in_types = []
         for x in arginfos:
             if x.type is cupy.ndarray:
@@ -938,7 +941,7 @@ cdef class ElementwiseKernel:
                 arginfos, type_map, self.params, self.operation,
                 self.name, self.preamble, **self.kwargs)
             self._cached_codes[in_types] = code
-        self._elementwise_kernel_memo[key] = kern
+
         return kern
 
     @property
@@ -1147,7 +1150,7 @@ cdef class ufunc:
         readonly tuple _params
         readonly tuple _params_with_where
         readonly dict _routine_cache
-        readonly dict _kernel_memo
+        readonly ExactlyOnceDict _kernel_memo
         readonly object _doc
         public object __doc__
         readonly object __name__
@@ -1191,7 +1194,7 @@ cdef class ufunc:
             _in_params + (ParameterInfo('T _where', False),)
             + _out_params + _other_params)
         self._routine_cache = {}
-        self._kernel_memo = {}
+        self._kernel_memo = ExactlyOnceDict()
 
     def __repr__(self):
         return '<ufunc \'%s\'>' % self.name
@@ -1389,14 +1392,19 @@ cdef class ufunc:
         cdef function.Function kern
         key = (dev_id, op, arginfos, has_where)
         kern = self._kernel_memo.get(key, None)
-        if kern is None:
-            name = self._get_name_with_type(arginfos, has_where)
-            params = self._params_with_where if has_where else self._params
-            kern = _get_ufunc_kernel(
+        if kern is not None:
+            return kern
+
+        name = self._get_name_with_type(arginfos, has_where)
+        params = self._params_with_where if has_where else self._params
+
+        # Ensure kernel is compiled and store if it wasn't.
+        return self._kernel_memo.setdefault_once(
+            key,
+            lambda: _get_ufunc_kernel(
                 op.in_types, op.out_types, op.routine, arginfos, has_where,
-                params, name, self._preamble, self._loop_prep)
-            self._kernel_memo[key] = kern
-        return kern
+                params, name, self._preamble, self._loop_prep),
+        )
 
     def outer(self, A, B, **kwargs):
         """Apply the ufunc operation to all pairs of elements in A and B.

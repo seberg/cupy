@@ -3,6 +3,7 @@
 import atexit
 import functools
 import os
+import threading
 import warnings
 
 import cython
@@ -33,13 +34,91 @@ DLPACK_EXPORT_VERSION = tuple(
 )
 
 
+cdef class _MyFuture:
+    def __cinit__(self):
+        self._event = threading.Event()
+
+    cpdef set_exception(self, e):
+        self._exception = e
+        self._event.set()
+
+    cpdef set_result(self, result):
+        self._result = result
+        self._event.set()
+
+    cpdef wait_result(self):
+        self._event.wait()
+        if self._exception is not None:
+            raise self._exception
+        return self._result
+
+
 cdef list _memos = []
+
+
+cdef class ExactlyOnceDict(dict):
+    """Dictionary that has a ``setdefault_once`` method that is similar to
+    ``setdefault`` but ensures only one thread calls it's creation function.
+
+    This is a crude implementation with the hope that future Python versions
+    (3.15+) may provide a clearer pattern.
+    An alternative would be to only allow a single thread to add new entries
+    via an RW-lock.
+    It further assumes that the function is either very rarely called (mostly
+    cache hits) or expensive.
+
+    Why? The original reason for this pattern is to prevent unloading of
+    modules. Without the "exactly once", multiple threads may compile and
+    load the same code. Except one thread, others will then immediately
+    unload again when done.
+    This is mostly fine but breaks graph capture where the loaded code is
+    clearly still needed later.
+
+    Deleting/clearing should be fine, but not well ordered.
+    """
+    def __getitem__(self, key):
+        raise NotImplementedError("__getitem__(): use `.get()`")
+
+    def __setitem__(self, key, value):
+        raise NotImplementedError("__setitem__(): use `.setdefault_once()`")
+
+    cpdef setdefault_once(self, key, default_func):
+        """Similar to dict.setdefault but guarantees that the function is
+        only evaluated if this thread get's to store the result in the dict.
+        """
+        cdef dict selfd = <dict>self
+        my_future = _MyFuture()
+        result = selfd.setdefault(key, my_future)
+        if result is not my_future:
+            if type(result) is _MyFuture:
+                return result.wait_result()
+            else:
+                return result
+
+        # Our event is set, we get to do the actual work and signal
+        # those threads waiting on us (on error, waiting threads will fail).
+        try:
+            result = default_func()
+            # Store result on event, so waiting threads do not have to trust
+            # dict, which yet another thread could be deleting.
+            selfd[key] = result
+            my_future.set_result(result)
+            return result
+        except BaseException as e:
+            # This part is only no-crash thread-safe. If someone cleared the
+            # dict we could be deleting something that isn't our future.
+            my_future.set_exception(e)
+            selfd.pop(key, None)
+            raise
 
 
 def memoize(bint for_each_device=False):
     """Makes a function memoizing the result for each argument and device.
 
     This decorator provides automatic memoization of the function result.
+    Unlike python's functools.cache, this decorator will evaluate the function
+    exactly once per cache entry.
+    This is helpful when creating kernels, see ``ExactlyOnceDict``.
 
     Args:
         for_each_device (bool): If ``True``, it memoizes the results for each
@@ -48,14 +127,14 @@ def memoize(bint for_each_device=False):
 
     """
     def decorator(f):
-        memo = {}
+        memo = ExactlyOnceDict()
         _memos.append(memo)
 
         @functools.wraps(f)
         @cython.binding(True)
         def ret(*args, **kwargs):
             cdef int id = -1
-            cdef dict m = memo
+            cdef ExactlyOnceDict m = <ExactlyOnceDict>memo
             if for_each_device:
                 id = runtime.getDevice()
             if len(kwargs):
@@ -64,8 +143,9 @@ def memoize(bint for_each_device=False):
                 arg_key = (id, args)
             result = m.get(arg_key, m)
             if result is m:
-                result = f(*args, **kwargs)
-                m[arg_key] = result
+                result = m.setdefault_once(
+                    arg_key, lambda: f(*args, **kwargs))
+
             return result
 
         return ret
@@ -75,7 +155,12 @@ def memoize(bint for_each_device=False):
 
 @atexit.register
 def clear_memo():
-    """Clears the memoized results for all functions decorated by memoize."""
+    """Clears the memoized results for all functions decorated by memoize.
+
+    .. note::
+        Clearing the cache may not be safe in all contexts. For example it
+        may cause crashes when used in a program that uses graph capturing.
+    """
     for memo in _memos:
         memo.clear()
 
