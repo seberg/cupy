@@ -252,14 +252,6 @@ cdef class PinnedMemoryPool:
             size are all in use.
 
     """
-    cdef:
-        object _alloc
-        dict _free
-        object __weakref__
-        object _weakref
-        size_t _allocation_unit_size
-        cython.pymutex _lock
-
     def __init__(self, allocator=_malloc):
         self._free = {}
         self._alloc = allocator
