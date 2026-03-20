@@ -34,7 +34,7 @@ class TestVectorizeOps(unittest.TestCase):
         ]
         return f(*args)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol={'default': 1e-6, numpy.float16: 1.5e-3})
     def test_vectorize_reciprocal(self, xp, dtype):
         def my_reciprocal(x):
@@ -43,7 +43,8 @@ class TestVectorizeOps(unittest.TestCase):
 
         return self._run(my_reciprocal, xp, [dtype])
 
-    @testing.for_all_dtypes_combination(names=('dtype1', 'dtype2'))
+    @testing.for_all_dtypes_combination(
+        names=('dtype1', 'dtype2'), bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_vectorize_add(self, xp, dtype1, dtype2):
         def my_add(x, y):
@@ -59,7 +60,8 @@ class TestVectorizeOps(unittest.TestCase):
 
         return self._run(my_sub, xp, [dtype, dtype])
 
-    @testing.for_all_dtypes_combination(names=('dtype1', 'dtype2'))
+    @testing.for_all_dtypes_combination(
+        names=('dtype1', 'dtype2'), bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-6)
     def test_vectorize_mul(self, xp, dtype1, dtype2):
         def my_mul(x, y):
@@ -80,7 +82,8 @@ class TestVectorizeOps(unittest.TestCase):
         return f(x1, x2)
 
     @testing.for_all_dtypes_combination(
-        names=('dtype1', 'dtype2'), no_bool=True, no_complex=True)
+        names=('dtype1', 'dtype2'), no_bool=True, no_complex=True,
+        bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-5)
     def test_vectorize_minmax(self, xp, dtype1, dtype2):
         def my_minmax(x, y):
@@ -100,7 +103,8 @@ class TestVectorizeOps(unittest.TestCase):
         x2[x2 == 0] = 1
         return f(x1, x2)
 
-    @testing.for_all_dtypes_combination(names=('dtype1', 'dtype2'))
+    @testing.for_all_dtypes_combination(
+        names=('dtype1', 'dtype2'), bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-6)
     @testing.with_requires('numpy>=1.23', 'numpy!=1.24.0', 'numpy!=1.24.1')
     def test_vectorize_div(self, xp, dtype1, dtype2):
@@ -109,7 +113,8 @@ class TestVectorizeOps(unittest.TestCase):
 
         return self.run_div(my_div, xp, [dtype1, dtype2])
 
-    @testing.for_all_dtypes_combination(names=('dtype1', 'dtype2'))
+    @testing.for_all_dtypes_combination(
+        names=('dtype1', 'dtype2'), bfloat16=False)
     @testing.numpy_cupy_allclose(accept_error=TypeError)
     def test_vectorize_floor_div(self, xp, dtype1, dtype2):
         def my_floor_div(x, y):
@@ -117,7 +122,8 @@ class TestVectorizeOps(unittest.TestCase):
 
         return self.run_div(my_floor_div, xp, [dtype1, dtype2])
 
-    @testing.for_all_dtypes_combination(names=('dtype1', 'dtype2'))
+    @testing.for_all_dtypes_combination(
+        names=('dtype1', 'dtype2'), bfloat16=False)
     @testing.numpy_cupy_allclose(
         rtol=1e-6, atol=1e-6, accept_error=TypeError)
     def test_vectorize_mod(self, xp, dtype1, dtype2):
@@ -134,7 +140,8 @@ class TestVectorizeOps(unittest.TestCase):
 
         return self._run(my_lshift, xp, [dtype, dtype])
 
-    @testing.for_all_dtypes_combination(names=('dtype1', 'dtype2'))
+    @testing.for_all_dtypes_combination(
+        names=('dtype1', 'dtype2'), bfloat16=False)
     @testing.numpy_cupy_array_equal(accept_error=TypeError)
     def test_vectorize_rshift(self, xp, dtype1, dtype2):
         def my_lshift(x, y):
@@ -142,7 +149,8 @@ class TestVectorizeOps(unittest.TestCase):
 
         return self._run(my_lshift, xp, [dtype1, dtype2])
 
-    @testing.for_all_dtypes_combination(names=('dtype1', 'dtype2'))
+    @testing.for_all_dtypes_combination(
+        names=('dtype1', 'dtype2'), bfloat16=False)
     @testing.numpy_cupy_array_equal(accept_error=TypeError)
     def test_vectorize_bit_or(self, xp, dtype1, dtype2):
         def my_bit_or(x, y):
@@ -150,7 +158,8 @@ class TestVectorizeOps(unittest.TestCase):
 
         return self._run(my_bit_or, xp, [dtype1, dtype2])
 
-    @testing.for_all_dtypes_combination(names=('dtype1', 'dtype2'))
+    @testing.for_all_dtypes_combination(
+        names=('dtype1', 'dtype2'), bfloat16=False)
     @testing.numpy_cupy_array_equal(accept_error=TypeError)
     def test_vectorize_bit_and(self, xp, dtype1, dtype2):
         def my_bit_and(x, y):
@@ -158,7 +167,8 @@ class TestVectorizeOps(unittest.TestCase):
 
         return self._run(my_bit_and, xp, [dtype1, dtype2])
 
-    @testing.for_all_dtypes_combination(names=('dtype1', 'dtype2'))
+    @testing.for_all_dtypes_combination(
+        names=('dtype1', 'dtype2'), bfloat16=False)
     @testing.numpy_cupy_array_equal(accept_error=TypeError)
     def test_vectorize_bit_xor(self, xp, dtype1, dtype2):
         def my_bit_xor(x, y):
@@ -173,7 +183,7 @@ class TestVectorizeOps(unittest.TestCase):
 
         return self._run(my_bit_invert, xp, [numpy.int64])
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_array_equal(accept_error=TypeError)
     def test_vectorize_logical_not(self, xp, dtype):
         def my_logical_not(x):
@@ -181,7 +191,8 @@ class TestVectorizeOps(unittest.TestCase):
 
         return self._run(my_logical_not, xp, [dtype])
 
-    @testing.for_all_dtypes_combination(names=('dtype1', 'dtype2'))
+    @testing.for_all_dtypes_combination(
+        names=('dtype1', 'dtype2'), bfloat16=False)
     @testing.numpy_cupy_array_equal(accept_error=TypeError)
     def test_vectorize_eq(self, xp, dtype1, dtype2):
         def my_eq(x, y):
@@ -189,7 +200,8 @@ class TestVectorizeOps(unittest.TestCase):
 
         return self._run(my_eq, xp, [dtype1, dtype2])
 
-    @testing.for_all_dtypes_combination(names=('dtype1', 'dtype2'))
+    @testing.for_all_dtypes_combination(
+        names=('dtype1', 'dtype2'), bfloat16=False)
     @testing.numpy_cupy_array_equal(accept_error=TypeError)
     def test_vectorize_neq(self, xp, dtype1, dtype2):
         def my_neq(x, y):
@@ -197,7 +209,8 @@ class TestVectorizeOps(unittest.TestCase):
 
         return self._run(my_neq, xp, [dtype1, dtype2])
 
-    @testing.for_all_dtypes_combination(names=('dtype1', 'dtype2'))
+    @testing.for_all_dtypes_combination(
+        names=('dtype1', 'dtype2'), bfloat16=False)
     @testing.numpy_cupy_array_equal(accept_error=TypeError)
     def test_vectorize_lt(self, xp, dtype1, dtype2):
         def my_lt(x, y):
@@ -205,7 +218,8 @@ class TestVectorizeOps(unittest.TestCase):
 
         return self._run(my_lt, xp, [dtype1, dtype2])
 
-    @testing.for_all_dtypes_combination(names=('dtype1', 'dtype2'))
+    @testing.for_all_dtypes_combination(
+        names=('dtype1', 'dtype2'), bfloat16=False)
     @testing.numpy_cupy_array_equal(accept_error=TypeError)
     def test_vectorize_le(self, xp, dtype1, dtype2):
         def my_le(x, y):
@@ -213,7 +227,8 @@ class TestVectorizeOps(unittest.TestCase):
 
         return self._run(my_le, xp, [dtype1, dtype2])
 
-    @testing.for_all_dtypes_combination(names=('dtype1', 'dtype2'))
+    @testing.for_all_dtypes_combination(
+        names=('dtype1', 'dtype2'), bfloat16=False)
     @testing.numpy_cupy_array_equal(accept_error=TypeError)
     def test_vectorize_gt(self, xp, dtype1, dtype2):
         def my_gt(x, y):
@@ -221,7 +236,8 @@ class TestVectorizeOps(unittest.TestCase):
 
         return self._run(my_gt, xp, [dtype1, dtype2])
 
-    @testing.for_all_dtypes_combination(names=('dtype1', 'dtype2'))
+    @testing.for_all_dtypes_combination(
+        names=('dtype1', 'dtype2'), bfloat16=False)
     @testing.numpy_cupy_array_equal(accept_error=TypeError)
     def test_vectorize_ge(self, xp, dtype1, dtype2):
         def my_ge(x, y):
@@ -279,7 +295,8 @@ class TestVectorizeExprs(unittest.TestCase):
         return f(x, y)
 
     @testing.with_requires("numpy>=1.25")
-    @testing.for_all_dtypes_combination(names=('dtype1', 'dtype2'))
+    @testing.for_all_dtypes_combination(
+        names=('dtype1', 'dtype2'), bfloat16=False)
     @testing.numpy_cupy_allclose(
         rtol={numpy.float16: 1e3, 'default': 1e-7}, accept_error=TypeError)
     def test_vectorize_ufunc_call_dtype(self, xp, dtype1, dtype2):
@@ -612,7 +629,7 @@ class TestVectorizeConstants(unittest.TestCase):
 @pytest.mark.skipif(_IS_HIP_LT7, reason="Skip on ROCm < 7 (HIP).")
 class TestVectorizeBroadcast(unittest.TestCase):
 
-    @testing.for_all_dtypes(no_bool=True)
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-5)
     def test_vectorize_broadcast(self, xp, dtype):
         def my_func(x1, x2):
@@ -623,7 +640,7 @@ class TestVectorizeBroadcast(unittest.TestCase):
         x2 = testing.shaped_random((30,), xp, dtype, seed=2)
         return f(x1, x2)
 
-    @testing.for_all_dtypes(no_bool=True)
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-5)
     def test_vectorize_python_scalar_input(self, xp, dtype):
         def my_func(x1, x2):
@@ -634,7 +651,7 @@ class TestVectorizeBroadcast(unittest.TestCase):
         x2 = 1
         return f(x1, x2)
 
-    @testing.for_all_dtypes(no_bool=True)
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-5)
     def test_vectorize_numpy_scalar_input(self, xp, dtype):
         def my_func(x1, x2):
@@ -649,7 +666,7 @@ class TestVectorizeBroadcast(unittest.TestCase):
 @pytest.mark.skipif(_IS_HIP_LT7, reason="Skip on ROCm < 7 (HIP).")
 class TestVectorize(unittest.TestCase):
 
-    @testing.for_all_dtypes(no_bool=True)
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(
         rtol={'default': 1e-5,
               numpy.float16: 1e-3 if runtime.is_hip else 1e-5})

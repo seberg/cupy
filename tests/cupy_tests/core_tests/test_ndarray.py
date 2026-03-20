@@ -586,19 +586,19 @@ class TestSize(unittest.TestCase):
 
 class TestPythonInterface(unittest.TestCase):
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_equal()
     def test_bytes_tobytes(self, xp, dtype):
         x = testing.shaped_arange((3, 4, 5), xp, dtype)
         return bytes(x)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_equal()
     def test_bytes_tobytes_empty(self, xp, dtype):
         x = xp.empty((0,), dtype)
         return bytes(x)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_equal()
     def test_bytes_tobytes_empty2(self, xp, dtype):
         x = xp.empty((3, 0, 4), dtype)
@@ -608,7 +608,7 @@ class TestPythonInterface(unittest.TestCase):
     # if scalar is of an integer dtype including bool_. It's spec is
     # bytes(int): bytes object of size given by the parameter initialized with
     # null bytes.
-    @testing.for_float_dtypes()
+    @testing.for_float_dtypes(bfloat16=False)
     @testing.numpy_cupy_equal()
     def test_bytes_tobytes_scalar_array(self, xp, dtype):
         x = xp.array(3, dtype)

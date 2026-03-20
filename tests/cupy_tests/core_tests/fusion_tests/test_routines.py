@@ -148,7 +148,7 @@ class TestFusionTrigonometricBinary(FusionBinaryUfuncTestBase):
 }))
 class TestFusionDegRad(FusionUnaryUfuncTestBase):
 
-    @testing.for_all_dtypes(no_complex=True)
+    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
     @fusion_utils.check_fusion()
     def test_trigonometric(self, xp, dtype):
         return lambda x: getattr(xp, self.func)(x)
@@ -283,7 +283,7 @@ class TestDivide(unittest.TestCase):
         return (x, y), {}
 
     @testing.for_all_dtypes_combination(
-        names=('dtype1', 'dtype2'), no_complex=True)
+        names=('dtype1', 'dtype2'), no_complex=True, bfloat16=False)
     @fusion_utils.check_fusion()
     def test_divide(self, xp, dtype1, dtype2):
         return lambda x, y: getattr(xp, self.func)(x, y)
@@ -365,7 +365,8 @@ class TestFusionManipulation(unittest.TestCase):
         y = testing.shaped_random((3, 4), xp, dtype2, scale=10, seed=2)
         return (cond, x, y), {}
 
-    @testing.for_all_dtypes_combination(names=('dtype1', 'dtype2'))
+    @testing.for_all_dtypes_combination(
+        names=('dtype1', 'dtype2'), bfloat16=False)
     @fusion_utils.check_fusion()
     def test_where(self, xp, dtype1, dtype2):
         return lambda cond, x, y: xp.where(cond, x, y)
@@ -398,7 +399,7 @@ class TestFusionManipulation(unittest.TestCase):
 }))
 class TestFusionNumericalReduction(FusionUnaryUfuncTestBase):
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @fusion_utils.check_fusion()
     def test_reduction(self, xp, dtype):
         return lambda x: getattr(xp, self.func)(x)

@@ -79,7 +79,8 @@ class TestFusionReductionSpecifyDtype(unittest.TestCase):
         return (x,), {}
 
     @testing.for_all_dtypes_combination(
-        names=('dtype1', 'dtype2'), no_bool=True, no_complex=True)
+        names=('dtype1', 'dtype2'), no_bool=True, no_complex=True,
+        bfloat16=False)
     @fusion_utils.check_fusion(accept_error=TypeError)
     def test_sum(self, xp, dtype1, dtype2):
         return lambda x: x.sum(axis=0, dtype=dtype2)

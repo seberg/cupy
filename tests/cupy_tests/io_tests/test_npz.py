@@ -10,7 +10,7 @@ from cupy import testing
 
 class TestNpz(unittest.TestCase):
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     def test_save_load(self, dtype):
         a = testing.shaped_arange((2, 3, 4), dtype=dtype)
         sio = io.BytesIO()
@@ -54,7 +54,7 @@ class TestNpz(unittest.TestCase):
             cupy.load(sio, allow_pickle=False)
         sio.close()
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     def check_savez(self, savez, dtype):
         a1 = testing.shaped_arange((2, 3, 4), dtype=dtype)
         a2 = testing.shaped_arange((3, 4, 5), dtype=dtype)
@@ -79,14 +79,14 @@ class TestNpz(unittest.TestCase):
     def test_savez_compressed(self):
         self.check_savez(cupy.savez_compressed)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     def test_pickle(self, dtype):
         a = testing.shaped_arange((2, 3, 4), dtype=dtype)
         s = pickle.dumps(a)
         b = pickle.loads(s)
         testing.assert_array_equal(a, b)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     def test_dump(self, dtype):
         a = testing.shaped_arange((2, 3, 4), dtype=dtype)
 

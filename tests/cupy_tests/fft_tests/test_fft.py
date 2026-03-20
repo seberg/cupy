@@ -109,14 +109,14 @@ def multi_gpu_config(gpu_configs=None):
 }))
 class TestFft:
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_fft(self, xp, dtype):
         a = testing.shaped_random(self.shape, xp, dtype)
         return xp.fft.fft(a, n=self.n, norm=self.norm)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     # NumPy 1.17.0 and 1.17.1 raises ZeroDivisonError due to a bug
@@ -135,7 +135,7 @@ class TestFft:
 }))
 class TestFftOrder:
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_fft(self, xp, dtype):
@@ -144,7 +144,7 @@ class TestFftOrder:
             a = xp.asfortranarray(a)
         return xp.fft.fft(a, axis=self.axis)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_ifft(self, xp, dtype):
@@ -349,7 +349,7 @@ class TestFft2:
 
     @nd_planning_states()
     @testing.for_orders('CF')
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_fft2(self, xp, dtype, order, enable_nd):
@@ -372,7 +372,7 @@ class TestFft2:
 
     @nd_planning_states()
     @testing.for_orders('CF')
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_ifft2(self, xp, dtype, order, enable_nd):
@@ -429,7 +429,7 @@ class TestFftn:
 
     @nd_planning_states()
     @testing.for_orders('CF')
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_fftn(self, xp, dtype, order, enable_nd):
@@ -452,7 +452,7 @@ class TestFftn:
 
     @nd_planning_states()
     @testing.for_orders('CF')
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_ifftn(self, xp, dtype, order, enable_nd):
@@ -737,7 +737,7 @@ class TestMultiGpuPlanCtxManagerFft:
 class TestFftnContiguity:
 
     @nd_planning_states([True])
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     def test_fftn_orders(self, dtype, enable_nd):
         for order in ['C', 'F']:
             a = testing.shaped_random(self.shape, cupy, dtype)
@@ -755,7 +755,7 @@ class TestFftnContiguity:
                 pass
 
     @nd_planning_states([True])
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     def test_ifftn_orders(self, dtype, enable_nd):
         for order in ['C', 'F']:
 
@@ -783,14 +783,14 @@ class TestFftnContiguity:
 }))
 class TestRfft:
 
-    @testing.for_all_dtypes(no_complex=True)
+    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_rfft(self, xp, dtype):
         a = testing.shaped_random(self.shape, xp, dtype)
         return xp.fft.rfft(a, n=self.n, norm=self.norm)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_irfft(self, xp, dtype):
@@ -808,7 +808,7 @@ class TestRfft:
 }))
 class TestPlanCtxManagerRfft:
 
-    @testing.for_all_dtypes(no_complex=True)
+    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_rfft(self, xp, dtype):
@@ -840,7 +840,7 @@ class TestPlanCtxManagerRfft:
         with plan:
             return xp.fft.irfft(a, n=self.n, norm=self.norm)
 
-    @testing.for_all_dtypes(no_complex=True)
+    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
     def test_rfft_error_on_wrong_plan(self, dtype):
         # This test ensures the context manager plan is picked up
 
@@ -885,7 +885,7 @@ class TestRfft2:
 
     @nd_planning_states()
     @testing.for_orders('CF')
-    @testing.for_all_dtypes(no_complex=True)
+    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_rfft2(self, xp, dtype, order, enable_nd):
@@ -898,7 +898,7 @@ class TestRfft2:
 
     @nd_planning_states()
     @testing.for_orders('CF')
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_irfft2(self, xp, dtype, order, enable_nd):
@@ -922,14 +922,14 @@ class TestRfft2:
 )
 class TestRfft2EmptyAxes:
 
-    @testing.for_all_dtypes(no_complex=True)
+    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
     def test_rfft2(self, dtype):
         for xp in (np, cupy):
             a = testing.shaped_random(self.shape, xp, dtype)
             with pytest.raises(IndexError):
                 xp.fft.rfft2(a, s=self.s, axes=self.axes, norm=self.norm)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     def test_irfft2(self, dtype):
         for xp in (np, cupy):
             a = testing.shaped_random(self.shape, xp, dtype)
@@ -964,7 +964,7 @@ class TestRfftn:
 
     @nd_planning_states()
     @testing.for_orders('CF')
-    @testing.for_all_dtypes(no_complex=True)
+    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_rfftn(self, xp, dtype, order, enable_nd):
@@ -977,7 +977,7 @@ class TestRfftn:
 
     @nd_planning_states()
     @testing.for_orders('CF')
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_irfftn(self, xp, dtype, order, enable_nd):
@@ -1027,7 +1027,7 @@ class TestPlanCtxManagerRfftn:
                             "instead")
 
     @nd_planning_states()
-    @testing.for_all_dtypes(no_complex=True)
+    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_rfftn(self, xp, dtype, enable_nd):
@@ -1046,7 +1046,7 @@ class TestPlanCtxManagerRfftn:
     @pytest.mark.skipif(cupy.cuda.runtime.is_hip,
                         reason="hipFFT's PlanNd for C2R is buggy")
     @nd_planning_states()
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_irfftn(self, xp, dtype, enable_nd):
@@ -1088,7 +1088,7 @@ class TestPlanCtxManagerRfftn:
 class TestRfftnContiguity:
 
     @nd_planning_states([True])
-    @testing.for_float_dtypes()
+    @testing.for_float_dtypes(bfloat16=False)
     def test_rfftn_orders(self, dtype, enable_nd):
         for order in ['C', 'F']:
             a = testing.shaped_random(self.shape, cupy, dtype)
@@ -1107,7 +1107,7 @@ class TestRfftnContiguity:
                 pass
 
     @nd_planning_states([True])
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     def test_ifftn_orders(self, dtype, enable_nd):
         for order in ['C', 'F']:
 
@@ -1134,14 +1134,14 @@ class TestRfftnContiguity:
 )
 class TestRfftnEmptyAxes:
 
-    @testing.for_all_dtypes(no_complex=True)
+    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
     def test_rfftn(self, dtype):
         for xp in (np, cupy):
             a = testing.shaped_random(self.shape, xp, dtype)
             with pytest.raises(IndexError):
                 xp.fft.rfftn(a, s=self.s, axes=self.axes, norm=self.norm)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     def test_irfftn(self, dtype):
         for xp in (np, cupy):
             a = testing.shaped_random(self.shape, xp, dtype)
@@ -1158,7 +1158,7 @@ class TestRfftnEmptyAxes:
 }))
 class TestHfft:
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_hfft(self, xp, dtype):
@@ -1166,7 +1166,7 @@ class TestHfft:
         out = xp.fft.hfft(a, n=self.n, norm=self.norm)
         return out
 
-    @testing.for_all_dtypes(no_complex=True)
+    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_ihfft(self, xp, dtype):
@@ -1182,12 +1182,12 @@ class TestHfft:
 )
 class TestFftfreq:
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, contiguous_check=False)
     def test_fftfreq(self, xp, dtype):
         return xp.fft.fftfreq(self.n, self.d)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, contiguous_check=False)
     def test_rfftfreq(self, xp, dtype):
         return xp.fft.rfftfreq(self.n, self.d)
@@ -1205,13 +1205,13 @@ class TestFftfreq:
 )
 class TestFftshift:
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, contiguous_check=False)
     def test_fftshift(self, xp, dtype):
         x = testing.shaped_random(self.shape, xp, dtype)
         return xp.fft.fftshift(x, self.axes)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, contiguous_check=False)
     def test_ifftshift(self, xp, dtype):
         x = testing.shaped_random(self.shape, xp, dtype)

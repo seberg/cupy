@@ -340,7 +340,7 @@ class TestListArgEinSum:
 ))
 class TestEinSumUnaryOperation:
 
-    @testing.for_all_dtypes(no_bool=False)
+    @testing.for_all_dtypes(no_bool=False, bfloat16=False)
     @testing.numpy_cupy_allclose(
         rtol={numpy.float16: 1e-1, 'default': 1e-7}, contiguous_check=False)
     def test_einsum_unary(self, xp, dtype):
@@ -351,7 +351,7 @@ class TestEinSumUnaryOperation:
             testing.assert_allclose(optimized_out, out)
         return out
 
-    @testing.for_all_dtypes(no_bool=False)
+    @testing.for_all_dtypes(no_bool=False, bfloat16=False)
     @testing.numpy_cupy_equal()
     def test_einsum_unary_views(self, xp, dtype):
         a = testing.shaped_arange(self.shape_a, xp, dtype)
@@ -362,7 +362,8 @@ class TestEinSumUnaryOperation:
     @testing.for_all_dtypes_combination(
         ['dtype_a', 'dtype_out'],
         no_bool=False,
-        no_complex=True)  # avoid ComplexWarning
+        no_complex=True,  # avoid ComplexWarning
+        bfloat16=False)
     @testing.numpy_cupy_allclose(
         rtol={numpy.float16: 1e-1, 'default': 1e-7}, contiguous_check=False)
     def test_einsum_unary_dtype(self, xp, dtype_a, dtype_out):
@@ -373,12 +374,12 @@ class TestEinSumUnaryOperation:
 
 
 class TestEinSumUnaryOperationWithScalar:
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_scalar_int(self, xp, dtype):
         return xp.asarray(xp.einsum('->', 2, dtype=dtype))
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_scalar_float(self, xp, dtype):
         return xp.asarray(xp.einsum('', 2.0, dtype=dtype))
@@ -439,7 +440,8 @@ class TestEinSumBinaryOperation:
     @testing.for_all_dtypes_combination(
         ['dtype_a', 'dtype_b'],
         no_bool=False,
-        no_float16=False)
+        no_float16=False,
+        bfloat16=False)
     @testing.numpy_cupy_allclose(
         rtol={numpy.float16: 1e-2, 'default': 1e-7}, contiguous_check=False)
     def test_einsum_binary(self, xp, dtype_a, dtype_b):
@@ -449,14 +451,14 @@ class TestEinSumBinaryOperation:
 
 
 class TestEinSumBinaryOperationWithScalar:
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(contiguous_check=False)
     def test_scalar_1(self, xp, dtype):
         shape_a = (2,)
         a = testing.shaped_arange(shape_a, xp, dtype)
         return xp.asarray(xp.einsum(',i->', 3, a))
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(contiguous_check=False)
     def test_scalar_2(self, xp, dtype):
         shape_a = (2,)
@@ -486,7 +488,8 @@ class TestEinSumTernaryOperation:
     @testing.for_all_dtypes_combination(
         ['dtype_a', 'dtype_b', 'dtype_c'],
         no_bool=False,
-        no_float16=False)
+        no_float16=False,
+        bfloat16=False)
     @testing.numpy_cupy_allclose(contiguous_check=False)
     def test_einsum_ternary(self, xp, dtype_a, dtype_b, dtype_c):
         a = testing.shaped_arange(self.shape_a, xp, dtype_a)

@@ -102,7 +102,7 @@ class TestAllAnyWithNaN:
             'invert': [False, True]}))
 class TestIn1DIsIn:
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test(self, xp, dtype):
         x = testing.shaped_arange(self.shape_x, xp, dtype)

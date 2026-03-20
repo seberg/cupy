@@ -10,7 +10,7 @@ from cupy import testing
 
 class TestScan:
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     def test_scan(self, dtype):
         element_num = 10000
         if dtype in {cupy.int8, cupy.uint8, cupy.float16}:
@@ -36,7 +36,7 @@ class TestScan:
             a = cupy.zeros((10,))
             scan(a)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     def test_scan_out(self, dtype):
         element_num = 10000
         if dtype in {cupy.int8, cupy.uint8, cupy.float16}:

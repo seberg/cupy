@@ -18,7 +18,7 @@ from cupy.exceptions import RankWarning
 )
 class TestPoly1dInit:
 
-    @testing.for_all_dtypes(no_bool=True)
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_poly1d_numpy_array(self, xp, dtype):
         a = numpy.arange(5, dtype=dtype)
@@ -27,7 +27,7 @@ class TestPoly1dInit:
         assert out.variable == (self.variable or 'x')
         return out
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_poly1d_cupy_array(self, xp, dtype):
         a = testing.shaped_arange((5,), xp, dtype)
@@ -43,7 +43,7 @@ class TestPoly1dInit:
         assert out.variable == (self.variable or 'x')
         return out
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_poly1d_numpy_poly1d(self, xp, dtype):
         array = testing.shaped_arange((5,), numpy, dtype)
@@ -53,7 +53,7 @@ class TestPoly1dInit:
         assert out.variable == (self.variable or 'x')
         return out
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_poly1d_numpy_poly1d_variable(self, xp, dtype):
         array = testing.shaped_arange((5,), numpy, dtype)
@@ -63,7 +63,7 @@ class TestPoly1dInit:
         assert out.variable == (self.variable or 'z')
         return out
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_poly1d_cupy_poly1d(self, xp, dtype):
         array = testing.shaped_arange((5,), xp, dtype)
@@ -72,7 +72,7 @@ class TestPoly1dInit:
         assert out.variable == (self.variable or 'x')
         return out
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_poly1d_cupy_poly1d_variable(self, xp, dtype):
         array = testing.shaped_arange((5,), xp, dtype)
@@ -82,7 +82,7 @@ class TestPoly1dInit:
         return out
 
     @testing.with_requires('numpy>=1.20')
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_poly1d_zero_dim(self, xp, dtype):
         a = testing.shaped_arange((), xp, dtype)
@@ -92,7 +92,7 @@ class TestPoly1dInit:
         return out
 
     @testing.with_requires('numpy>=1.20')
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_poly1d_zero_size(self, xp, dtype):
         a = testing.shaped_arange((0,), xp, dtype)
@@ -101,7 +101,7 @@ class TestPoly1dInit:
         assert out.variable == (self.variable or 'x')
         return out
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-5, atol=1e-5)
     def test_poly1d_roots(self, xp, dtype):
         a = testing.shaped_arange((4,), xp, dtype)
@@ -112,25 +112,25 @@ class TestPoly1dInit:
 
 class TestPoly1d:
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_poly1d_leading_zeros(self, xp, dtype):
         a = xp.array([0, 0, 1, 2, 3], dtype)
         return xp.poly1d(a)
 
-    @testing.for_all_dtypes(no_bool=True)
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_poly1d_neg(self, xp, dtype):
         a = testing.shaped_arange((5,), xp, dtype)
         return -xp.poly1d(a)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_equal()
     def test_poly1d_order(self, xp, dtype):
         a = testing.shaped_arange((10,), xp, dtype)
         return xp.poly1d(a).order
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_equal()
     def test_poly1d_order_leading_zeros(self, xp, dtype):
         a = xp.array([0, 0, 1, 2, 3, 0], dtype)
@@ -146,35 +146,35 @@ class TestPoly1d:
         # The current `cupy.roots` doesn't guarantee the order of results.
         return xp.sort(out)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_equal()
     def test_poly1d_getitem1(self, xp, dtype):
         a = testing.shaped_arange((10,), xp, dtype)
         with cupyx.allow_synchronize(False):
             return xp.poly1d(a)[-1]
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_equal()
     def test_poly1d_getitem2(self, xp, dtype):
         a = testing.shaped_arange((10,), xp, dtype)
         with cupyx.allow_synchronize(False):
             return xp.poly1d(a)[5]
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_equal()
     def test_poly1d_getitem3(self, xp, dtype):
         a = testing.shaped_arange((10,), xp, dtype)
         with cupyx.allow_synchronize(False):
             return xp.poly1d(a)[100]
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_equal()
     def test_poly1d_getitem4(self, xp, dtype):
         a = xp.array([0, 0, 1, 2, 3, 0], dtype)
         with cupyx.allow_synchronize(False):
             return xp.poly1d(a)[2]
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_poly1d_setitem(self, xp, dtype):
         a = testing.shaped_arange((10,), xp, dtype)
@@ -183,7 +183,7 @@ class TestPoly1d:
             b[100] = 20
         return b
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_poly1d_setitem_leading_zeros(self, xp, dtype):
         a = xp.array([0, 0, 0, 2, 3, 0], dtype)
@@ -192,7 +192,7 @@ class TestPoly1d:
             b[1] = 10
         return b
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     def test_poly1d_setitem_neg(self, dtype):
         for xp in (numpy, cupy):
             a = testing.shaped_arange((10,), xp, dtype)
@@ -200,7 +200,7 @@ class TestPoly1d:
             with pytest.raises(ValueError):
                 b[-1] = 20
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     def test_poly1d_get1(self, dtype):
         a1 = testing.shaped_arange((10,), cupy, dtype)
         a2 = testing.shaped_arange((10,), numpy, dtype)
@@ -208,7 +208,7 @@ class TestPoly1d:
         b2 = numpy.poly1d(a2, variable='z')
         assert b1 == b2
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     def test_poly1d_get2(self, dtype):
         a1 = testing.shaped_arange((), cupy, dtype)
         a2 = testing.shaped_arange((), numpy, dtype)
@@ -216,7 +216,7 @@ class TestPoly1d:
         b2 = numpy.poly1d(a2)
         assert b1 == b2
 
-    @testing.for_all_dtypes(no_bool=True)
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     def test_poly1d_set(self, dtype):
         arr1 = testing.shaped_arange((10,), cupy, dtype)
         arr2 = numpy.ones(10, dtype=dtype)
@@ -226,19 +226,19 @@ class TestPoly1d:
         assert a.variable == b.variable
         testing.assert_array_equal(a.coeffs, b.coeffs)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_equal()
     def test_poly1d_repr(self, xp, dtype):
         a = testing.shaped_arange((5,), xp, dtype)
         return repr(xp.poly1d(a))
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_equal()
     def test_poly1d_str(self, xp, dtype):
         a = testing.shaped_arange((5,), xp, dtype)
         return str(xp.poly1d(a))
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol={numpy.float16: 1e-2, 'default': 1e-6})
     def test_poly1d_call(self, xp, dtype):
         a = testing.shaped_arange((5,), xp, dtype)
@@ -248,13 +248,14 @@ class TestPoly1d:
 
 class TestPoly:
 
-    @testing.for_all_dtypes(no_bool=True)
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-4)
     def test_poly_1d(self, xp, dtype):
         a = testing.shaped_arange((5,), xp, dtype)
         return xp.poly(a)
 
-    @testing.for_all_dtypes(no_bool=True, no_float16=True, no_complex=True)
+    @testing.for_all_dtypes(no_bool=True, no_float16=True, no_complex=True,
+                            bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-4)
     def test_poly_2d_symmetric_real(self, xp, dtype):
         a = xp.array([[6, 3, 1],
@@ -268,34 +269,34 @@ class TestPoly:
         a = xp.array([[2, -1j], [1j, 1]], dtype)
         return xp.poly(a)
 
-    @testing.for_all_dtypes(no_bool=True)
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     def test_poly_2d_square(self, dtype):
         a = testing.shaped_arange((3, 3), cupy, dtype)
         with pytest.raises(NotImplementedError):
             cupy.poly(a)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     def test_poly_2d_general(self, dtype):
         for xp in (numpy, cupy):
             a = testing.shaped_arange((2, 4), xp, dtype)
             with pytest.raises(ValueError):
                 xp.poly(a)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     def test_poly_ndim(self, dtype):
         for xp in (numpy, cupy):
             a = testing.shaped_arange((5, 4, 3), xp, dtype)
             with pytest.raises(ValueError):
                 xp.poly(a)
 
-    @testing.for_all_dtypes(no_bool=True)
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     def test_poly_zero_dim(self, dtype):
         for xp in (numpy, cupy):
             a = testing.shaped_arange((), xp, dtype)
             with pytest.raises(TypeError):
                 numpy.poly(a)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_equal()
     def test_poly_empty(self, xp, dtype):
         a = xp.zeros((0), dtype)
@@ -309,7 +310,7 @@ class TestPoly:
 class TestPoly1dPow:
 
     @testing.with_requires('numpy>=1.20')
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-1)
     def test_poly1d_pow_scalar(self, xp, dtype):
         a = testing.shaped_arange(self.shape, xp, dtype)
@@ -322,7 +323,7 @@ class TestPoly1dPow:
 }))
 class TestPoly1dPowInvalidValue:
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     def test_poly1d_pow(self, dtype):
         for xp in (numpy, cupy):
             a = testing.shaped_arange(self.shape, xp, dtype)
@@ -335,7 +336,7 @@ class TestPoly1dPowInvalidValue:
 }))
 class TestPoly1dPowInvalidType:
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     def test_poly1d_pow(self, dtype):
         for xp in (numpy, cupy):
             a = testing.shaped_arange((5,), xp, dtype)
@@ -373,7 +374,7 @@ class Poly1dTestBase:
 class TestPoly1dPolynomialArithmetic(Poly1dTestBase):
 
     @testing.with_requires('numpy>=1.20')
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-4, accept_error=TypeError)
     def test_poly1d_arithmetic(self, xp, dtype):
         if self.type_l == 'numpy_scalar' and self.type_r == 'poly1d':
@@ -390,7 +391,7 @@ class TestPoly1dPolynomialArithmetic(Poly1dTestBase):
 }))
 class TestPoly1dMathArithmetic(Poly1dTestBase):
 
-    @testing.for_all_dtypes(no_bool=True)
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-5)
     def test_poly1d_arithmetic(self, xp, dtype):
         func = getattr(xp, self.fname)
@@ -407,7 +408,7 @@ class TestPoly1dMathArithmetic(Poly1dTestBase):
 class TestPoly1dRoutines(Poly1dTestBase):
 
     @testing.with_requires('numpy>=1.20')
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-4, accept_error=TypeError)
     def test_poly1d_routine(self, xp, dtype):
         func = getattr(xp, self.fname)
@@ -432,25 +433,25 @@ class TestPoly1dEquality:
         b2 = xp.poly1d(a2)
         return b1, b2
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_equal()
     def test_poly1d_eq1(self, xp, dtype):
         a, b = self.make_poly1d1(xp, dtype)
         return a == b
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_equal()
     def test_poly1d_eq2(self, xp, dtype):
         a, b = self.make_poly1d2(xp, dtype)
         return a == b
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_equal()
     def test_poly1d_ne1(self, xp, dtype):
         a, b = self.make_poly1d1(xp, dtype)
         return a != b
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_equal()
     def test_poly1d_ne2(self, xp, dtype):
         a, b = self.make_poly1d2(xp, dtype)
@@ -465,7 +466,7 @@ class TestPoly1dEquality:
 class TestPolyArithmeticShapeCombination:
 
     @testing.with_requires('numpy>=1.20')
-    @testing.for_all_dtypes(no_bool=True)
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-5)
     def test_polyroutine(self, xp, dtype):
         func = getattr(xp, self.fname)
@@ -479,7 +480,8 @@ class TestPolyArithmeticShapeCombination:
 }))
 class TestPolyArithmeticDiffTypes:
 
-    @testing.for_all_dtypes_combination(names=['dtype1', 'dtype2'])
+    @testing.for_all_dtypes_combination(
+        names=['dtype1', 'dtype2'], bfloat16=False)
     def test_polyroutine_diff_types_array(self, dtype1, dtype2):
         def f(xp):
             func = getattr(xp, self.fname)
@@ -494,7 +496,8 @@ class TestPolyArithmeticDiffTypes:
         except TypeError:
             pass
 
-    @testing.for_all_dtypes_combination(names=['dtype1', 'dtype2'])
+    @testing.for_all_dtypes_combination(
+        names=['dtype1', 'dtype2'], bfloat16=False)
     def test_polyroutine_diff_types_poly1d(self, dtype1, dtype2):
         def f(xp):
             func = getattr(xp, self.fname)
@@ -529,7 +532,7 @@ class TestPolyfitParametersCombinations:
         w = x if self.weighted else None
         return xp.polyfit(x, y, self.deg, self.rcond, True, w)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(
         atol=1e-9, accept_error=TypeError, contiguous_check=False)
     def test_polyfit_default(self, xp, dtype):
@@ -674,7 +677,8 @@ class TestPolyfitInvalid:
 class TestPolyfitDiffTypes:
 
     @testing.for_all_dtypes_combination(
-        names=['dtype1', 'dtype2'], no_bool=True, full=True)
+        names=['dtype1', 'dtype2'], no_bool=True, full=True,
+        bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-1, atol=1e-1, accept_error=TypeError)
     def test_polyfit_unweighted_diff_types(self, xp, dtype1, dtype2):
         x = testing.shaped_arange((5,), xp, dtype1)
@@ -682,7 +686,8 @@ class TestPolyfitDiffTypes:
         return xp.polyfit(x, y, 5)
 
     @testing.for_all_dtypes_combination(
-        names=['dtype1', 'dtype2', 'dtype3'], no_bool=True, full=True)
+        names=['dtype1', 'dtype2', 'dtype3'], no_bool=True, full=True,
+        bfloat16=False)
     @testing.numpy_cupy_allclose(atol=1e-0, accept_error=TypeError)
     def test_polyfit_weighted_diff_types(self, xp, dtype1, dtype2, dtype3):
         x = testing.shaped_arange((5,), xp, dtype1)
@@ -697,7 +702,7 @@ class TestPolyfitDiffTypes:
 }))
 class TestPolyval(Poly1dTestBase):
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol={numpy.float16: 1e-2, 'default': 1e-3})
     def test_polyval(self, xp, dtype):
         a1 = self._get_input(xp, self.type_l, dtype, size=5)
@@ -711,7 +716,7 @@ class TestPolyval(Poly1dTestBase):
 }))
 class TestPolyvalInvalidTypes(Poly1dTestBase):
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     def test_polyval(self, dtype):
         for xp in (numpy, cupy):
             a1 = self._get_input(xp, self.type_l, dtype)
@@ -726,7 +731,7 @@ class TestPolyvalInvalidTypes(Poly1dTestBase):
 }))
 class TestPolyvalShapeCombination:
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol={numpy.float16: 1e-2, 'default': 1e-6})
     def test_polyval(self, xp, dtype):
         a = testing.shaped_arange(self.shape1, xp, dtype)
@@ -739,7 +744,7 @@ class TestPolyvalShapeCombination:
 }))
 class TestPolyvalInvalidShapeCombination:
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     def test_polyval(self, dtype):
         for xp in (numpy, cupy):
             a = testing.shaped_arange((), xp, dtype)
@@ -750,7 +755,8 @@ class TestPolyvalInvalidShapeCombination:
 
 class TestPolyvalDtypesCombination:
 
-    @testing.for_all_dtypes_combination(names=['dtype1', 'dtype2'], full=True)
+    @testing.for_all_dtypes_combination(
+        names=['dtype1', 'dtype2'], full=True, bfloat16=False)
     @testing.numpy_cupy_allclose(rtol={numpy.float16: 1e-2, 'default': 1e-6})
     def test_polyval_diff_types_array_array(self, xp, dtype1, dtype2):
         a = testing.shaped_arange((10,), xp, dtype1)
@@ -758,7 +764,8 @@ class TestPolyvalDtypesCombination:
         return xp.polyval(a, b)
 
     @testing.with_requires('numpy>=1.25')
-    @testing.for_all_dtypes_combination(names=['dtype1', 'dtype2'], full=True)
+    @testing.for_all_dtypes_combination(
+        names=['dtype1', 'dtype2'], full=True, bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-6)
     def test_polyval_diff_types_array_scalar(self, xp, dtype1, dtype2):
         a = testing.shaped_arange((10,), xp, dtype1)
@@ -768,13 +775,13 @@ class TestPolyvalDtypesCombination:
 
 class TestPolyvalMultiDimensional:
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     def test_polyval_ndim_values(self, dtype):
         a = testing.shaped_arange((10,), cupy, dtype)
         b = testing.shaped_arange((2, 4), cupy, dtype)
         return cupy.polyval(a, b)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     def test_polyval_poly1d_values(self, dtype):
         a = testing.shaped_arange((5,), cupy, dtype)
         b = testing.shaped_arange((3,), cupy, dtype)
@@ -787,7 +794,7 @@ class TestPolyvalMultiDimensional:
 }))
 class TestPolyRoutinesNdim:
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     def test_polyroutine_ndim(self, dtype):
         for xp in (numpy, cupy):
             func = getattr(xp, self.fname)
@@ -863,34 +870,34 @@ class TestRootsSpecialCases:
 
 class TestRoots:
 
-    @testing.for_all_dtypes(no_bool=True)
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_roots_zero_sized(self, xp, dtype):
         a = xp.zeros((0,), dtype)
         return xp.roots(a)
 
     @testing.with_requires('numpy>1.17')
-    @testing.for_all_dtypes(no_bool=True)
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     def test_roots_zero_dim(self, dtype):
         for xp in (numpy, cupy):
             a = testing.shaped_random((), xp, dtype)
             with pytest.raises(TypeError):
                 xp.roots(a)
 
-    @testing.for_all_dtypes(no_bool=True)
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     def test_roots_ndim(self, dtype):
         for xp in (numpy, cupy):
             a = testing.shaped_arange((3, 1), xp, dtype)
             with pytest.raises(ValueError):
                 xp.roots(a)
 
-    @testing.for_all_dtypes(no_bool=True)
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_roots_zeros(self, xp, dtype):
         a = xp.zeros((3,), dtype)
         return xp.roots(a)
 
-    @testing.for_all_dtypes(no_bool=True)
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     def test_roots_zeros_ndim(self, dtype):
         for xp in (numpy, cupy):
             a = xp.zeros((2, 1), dtype)

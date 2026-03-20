@@ -17,6 +17,12 @@ from cupy.testing import _parameterized
 
 from cupy.testing._pytest_impl import is_available
 
+try:
+    import ml_dtypes
+    _bfloat16 = ml_dtypes.bfloat16
+except ImportError:
+    _bfloat16 = None
+
 
 if is_available():
     import _pytest.outcomes
@@ -858,7 +864,37 @@ def for_dtypes(dtypes, name='dtype'):
 
 _complex_dtypes = (numpy.complex64, numpy.complex128)
 _regular_float_dtypes = (numpy.float64, numpy.float32)
-_float_dtypes = _regular_float_dtypes + (numpy.float16,)
+
+
+def _make_float_dtypes(no_float16, bfloat16=None):
+    """Return the float dtypes tuple used by testing decorators.
+
+    Args:
+        no_float16: If True, omit ``numpy.float16``.
+        bfloat16: Tri-state control for the optional bfloat16 scalar type
+            (``ml_dtypes``), independent of ``no_float16`` when True/False:
+            ``None`` — include it iff float16 is included and ``ml_dtypes`` is
+            available;
+            ``True`` — include whenever available (even if float16 is omitted);
+            ``False`` — never include it.
+    """
+    dtypes = list(_regular_float_dtypes)
+    if not no_float16:
+        dtypes.append(numpy.float16)
+
+    want_bf16 = False
+    if bfloat16 is True:
+        want_bf16 = _bfloat16 is not None
+    elif bfloat16 is None and not no_float16:
+        want_bf16 = _bfloat16 is not None
+    if want_bf16:
+        dtypes.append(_bfloat16)
+
+    return tuple(dtypes)
+
+
+# Full float set (including bfloat16 when available) for dtype detection.
+_float_dtypes = _make_float_dtypes(False, None)
 _signed_dtypes = tuple(numpy.dtype(i).type for i in 'bhilq')
 _unsigned_dtypes = tuple(numpy.dtype(i).type for i in 'BHILQ')
 _int_dtypes = _signed_dtypes + _unsigned_dtypes
@@ -867,11 +903,8 @@ _regular_dtypes = _regular_float_dtypes + _int_bool_dtypes
 _dtypes = _float_dtypes + _int_bool_dtypes
 
 
-def _make_all_dtypes(no_float16, no_bool, no_complex):
-    if no_float16:
-        dtypes = _regular_float_dtypes
-    else:
-        dtypes = _float_dtypes
+def _make_all_dtypes(no_float16, no_bool, no_complex, bfloat16=None):
+    dtypes = _make_float_dtypes(no_float16, bfloat16)
 
     if no_bool:
         dtypes += _int_dtypes
@@ -885,7 +918,7 @@ def _make_all_dtypes(no_float16, no_bool, no_complex):
 
 
 def for_all_dtypes(name='dtype', no_float16=False, no_bool=False,
-                   no_complex=False):
+                   no_complex=False, bfloat16=None):
     """Decorator that checks the fixture with all dtypes.
 
     Args:
@@ -896,6 +929,10 @@ def for_all_dtypes(name='dtype', no_float16=False, no_bool=False,
              omitted from candidate dtypes.
          no_complex(bool): If ``True``, ``numpy.complex64`` and
              ``numpy.complex128`` are omitted from candidate dtypes.
+         bfloat16(bool or None): Control for the optional bfloat16 scalar type
+             (requires ``ml_dtypes``). Default ``None`` follows ``no_float16``:
+             bfloat16 is tested whenever float16 is. ``True`` forces it when
+             available (even if ``no_float16=True``). ``False`` omits it.
 
     dtypes to be tested: ``numpy.complex64`` (optional),
     ``numpy.complex128`` (optional),
@@ -938,28 +975,29 @@ def for_all_dtypes(name='dtype', no_float16=False, no_bool=False,
 
     .. seealso:: :func:`cupy.testing.for_dtypes`
     """
-    return for_dtypes(_make_all_dtypes(no_float16, no_bool, no_complex),
-                      name=name)
+    return for_dtypes(
+        _make_all_dtypes(no_float16, no_bool, no_complex, bfloat16),
+        name=name)
 
 
-def for_float_dtypes(name='dtype', no_float16=False):
+def for_float_dtypes(name='dtype', no_float16=False, bfloat16=None):
     """Decorator that checks the fixture with float dtypes.
 
     Args:
          name(str): Argument name to which specified dtypes are passed.
          no_float16(bool): If ``True``, ``numpy.float16`` is
              omitted from candidate dtypes.
+         bfloat16(bool or None): Same semantics as in
+             :func:`cupy.testing.for_all_dtypes`.
 
     dtypes to be tested are ``numpy.float16`` (optional), ``numpy.float32``,
-    and ``numpy.float64``.
+    ``numpy.float64``, and bfloat16 (optional, when ``ml_dtypes`` is installed
+    and not excluded with ``bfloat16=False``).
 
     .. seealso:: :func:`cupy.testing.for_dtypes`,
         :func:`cupy.testing.for_all_dtypes`
     """
-    if no_float16:
-        return for_dtypes(_regular_float_dtypes, name=name)
-    else:
-        return for_dtypes(_float_dtypes, name=name)
+    return for_dtypes(_make_float_dtypes(no_float16, bfloat16), name=name)
 
 
 def for_signed_dtypes(name='dtype'):
@@ -1102,7 +1140,7 @@ def for_dtypes_combination(types, names=('dtype',), full=None):
 
 def for_all_dtypes_combination(names=('dtyes',),
                                no_float16=False, no_bool=False, full=None,
-                               no_complex=False):
+                               no_complex=False, bfloat16=None):
     """Decorator that checks the fixture with a product set of all dtypes.
 
     Args:
@@ -1117,10 +1155,12 @@ def for_all_dtypes_combination(names=('dtyes',),
              (see description in :func:`cupy.testing.for_dtypes_combination`).
          no_complex(bool): If, True, ``numpy.complex64`` and
              ``numpy.complex128`` are omitted from candidate dtypes.
+         bfloat16(bool or None): Same semantics as in
+             :func:`cupy.testing.for_all_dtypes`.
 
     .. seealso:: :func:`cupy.testing.for_dtypes_combination`
     """
-    types = _make_all_dtypes(no_float16, no_bool, no_complex)
+    types = _make_all_dtypes(no_float16, no_bool, no_complex, bfloat16)
     return for_dtypes_combination(types, names, full)
 
 

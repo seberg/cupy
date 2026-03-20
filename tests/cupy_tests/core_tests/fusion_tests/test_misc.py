@@ -181,7 +181,7 @@ class TestSpecialValues(FusionTestBase):
         return func
 
     @testing.with_requires('numpy>=2.0')
-    @testing.for_float_dtypes()
+    @testing.for_float_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_inf_where(self, xp, dtype):
         @cupy.fuse()
@@ -194,7 +194,7 @@ class TestSpecialValues(FusionTestBase):
         return func(points, mask)
 
     @testing.with_requires('numpy>=2.0')
-    @testing.for_float_dtypes()
+    @testing.for_float_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_nan_where(self, xp, dtype):
         @cupy.fuse()

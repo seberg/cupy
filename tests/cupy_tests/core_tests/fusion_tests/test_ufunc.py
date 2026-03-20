@@ -221,7 +221,8 @@ class TestFusionScalar(unittest.TestCase):
         return func
 
     @testing.with_requires('numpy>=1.25')
-    @testing.for_all_dtypes_combination(names=('dtype1', 'dtype2'))
+    @testing.for_all_dtypes_combination(
+        names=('dtype1', 'dtype2'), bfloat16=False)
     @fusion_utils.check_fusion()
     def test_numpy_scalar_l(self, xp, dtype1, dtype2):
         def func(array):
@@ -288,7 +289,8 @@ class TestFusionScalar(unittest.TestCase):
         array = testing.shaped_random((3, 4), xp, 'int64', scale=10, seed=0)
         return (scalar1, scalar2, array), {}
 
-    @testing.for_all_dtypes_combination(names=('dtype1', 'dtype2'))
+    @testing.for_all_dtypes_combination(
+        names=('dtype1', 'dtype2'), bfloat16=False)
     @fusion_utils.check_fusion(
         generate_inputs_name='numpy_scalar_params_binop')
     def test_numpy_scalar_params_binop(self, xp, dtype1, dtype2):

@@ -15,7 +15,7 @@ class TestConj:
         x = testing.shaped_arange((2, 3), xp, dtype)
         return x.conj()
 
-    @testing.for_all_dtypes(no_complex=True)
+    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
     @testing.numpy_cupy_array_almost_equal()
     def test_conj_pass(self, xp, dtype):
         x = testing.shaped_arange((2, 3), xp, dtype)
@@ -29,7 +29,7 @@ class TestConj:
         x = testing.shaped_arange((2, 3), xp, dtype)
         return x.conjugate()
 
-    @testing.for_all_dtypes(no_complex=True)
+    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
     @testing.numpy_cupy_array_almost_equal()
     def test_conjugate_pass(self, xp, dtype):
         x = testing.shaped_arange((2, 3), xp, dtype)

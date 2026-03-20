@@ -37,7 +37,9 @@ from cupy import testing
 }))
 class TestDot(unittest.TestCase):
 
-    @testing.for_all_dtypes_combination(['dtype_a', 'dtype_b'])
+    @testing.for_all_dtypes_combination(
+        # skip bfloat as float16 and bfloat16 mixing doesn't work
+        ['dtype_a', 'dtype_b'], bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_dot(self, xp, dtype_a, dtype_b):
         shape_a, shape_b = self.shape
@@ -51,9 +53,9 @@ class TestDot(unittest.TestCase):
             b = testing.shaped_arange(shape_b, xp, dtype_b)
         return xp.dot(a, b)
 
-    @testing.for_float_dtypes(name='dtype_a')
-    @testing.for_float_dtypes(name='dtype_b')
-    @testing.for_float_dtypes(name='dtype_c')
+    @testing.for_float_dtypes(name='dtype_a', bfloat16=False)
+    @testing.for_float_dtypes(name='dtype_b', bfloat16=False)
+    @testing.for_float_dtypes(name='dtype_c', bfloat16=False)
     @testing.numpy_cupy_allclose(accept_error=ValueError)
     def test_dot_with_out(self, xp, dtype_a, dtype_b, dtype_c):
         shape_a, shape_b = self.shape
@@ -87,7 +89,8 @@ class TestDot(unittest.TestCase):
 }))
 class TestCrossProduct(unittest.TestCase):
 
-    @testing.for_all_dtypes_combination(['dtype_a', 'dtype_b'])
+    @testing.for_all_dtypes_combination(
+        ['dtype_a', 'dtype_b'], bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_cross(self, xp, dtype_a, dtype_b):
         if dtype_a == dtype_b == numpy.bool_:
@@ -143,7 +146,8 @@ class TestCrossProductDeprecated(unittest.TestCase):
 class TestLinalgCrossProduct(unittest.TestCase):
 
     @testing.with_requires('numpy>=2.0')
-    @testing.for_all_dtypes_combination(['dtype_a', 'dtype_b'])
+    @testing.for_all_dtypes_combination(
+        ['dtype_a', 'dtype_b'], bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_cross(self, xp, dtype_a, dtype_b):
         if dtype_a == dtype_b == numpy.bool_:
@@ -166,7 +170,8 @@ class TestLinalgCrossProduct(unittest.TestCase):
 }))
 class TestDotFor0Dim(unittest.TestCase):
 
-    @testing.for_all_dtypes_combination(['dtype_a', 'dtype_b'])
+    @testing.for_all_dtypes_combination(
+        ['dtype_a', 'dtype_b'], bfloat16=False)
     @testing.numpy_cupy_allclose(contiguous_check=False)
     def test_dot(self, xp, dtype_a, dtype_b):
         shape_a, shape_b = self.shape
@@ -477,13 +482,13 @@ class TestMatrixPower(unittest.TestCase):
         a = testing.shaped_arange((3, 3), xp, dtype)
         return xp.linalg.matrix_power(a, 1)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_matrix_power_2(self, xp, dtype):
         a = testing.shaped_arange((3, 3), xp, dtype)
         return xp.linalg.matrix_power(a, 2)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_matrix_power_3(self, xp, dtype):
         a = testing.shaped_arange((3, 3), xp, dtype)
@@ -510,13 +515,13 @@ class TestMatrixPower(unittest.TestCase):
         a = a * a % 30
         return xp.linalg.matrix_power(a, -3)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_matrix_power_of_two(self, xp, dtype):
         a = xp.eye(23, k=17, dtype=dtype) + xp.eye(23, k=-6, dtype=dtype)
         return xp.linalg.matrix_power(a, 1 << 50)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_matrix_power_large(self, xp, dtype):
         a = xp.eye(23, k=17, dtype=dtype) + xp.eye(23, k=-6, dtype=dtype)

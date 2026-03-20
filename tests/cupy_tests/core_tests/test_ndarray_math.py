@@ -14,7 +14,7 @@ class TestRound(unittest.TestCase):
 
     shape = (20,)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(atol=1e-5)
     def test_round(self, xp, dtype):
         if dtype == numpy.bool_:
@@ -46,7 +46,7 @@ class TestRoundHalfway(unittest.TestCase):
 
     shape = (20,)
 
-    @testing.for_float_dtypes()
+    @testing.for_float_dtypes(bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_round_halfway_float(self, xp, dtype):
         # generate [..., -1.5, -0.5, 0.5, 1.5, ...] * 10^{-decimals}

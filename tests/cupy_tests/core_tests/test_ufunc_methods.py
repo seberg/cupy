@@ -190,13 +190,13 @@ class TestUfuncAtAtomicOps:
 
 class TestUfuncReduce:
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol={numpy.float16: 1e-3, 'default': 1e-6})
     def test_reduce_add(self, xp, dtype):
         x = testing.shaped_random((3, 4), xp=xp, dtype=dtype, seed=0)
         return xp.add.reduce(x, axis=-1)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol={numpy.float16: 1e-3, 'default': 1e-6})
     def test_multiply_add(self, xp, dtype):
         x = testing.shaped_random((3, 4), xp=xp, dtype=dtype, seed=0)
@@ -205,13 +205,13 @@ class TestUfuncReduce:
 
 class TestUfuncAccumulate:
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol={numpy.float16: 1e-3, 'default': 1e-6})
     def test_reduce_add(self, xp, dtype):
         x = testing.shaped_random((3, 4), xp=xp, dtype=dtype, seed=0)
         return xp.add.accumulate(x, axis=-1)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol={numpy.float16: 1e-3, 'default': 1e-6})
     def test_multiply_add(self, xp, dtype):
         x = testing.shaped_random((3, 4), xp=xp, dtype=dtype, seed=0)
