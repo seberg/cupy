@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import cupy
 from cupy._core import _kernel
 from cupy._core import _memory_range
 from cupy._manipulation import join
@@ -21,7 +22,7 @@ _get_memory_ptrs_kernel = _kernel.ElementwiseKernel(
 
 
 def _get_memory_ptrs(x):
-    if x.dtype.kind != 'c':
+    if not cupy.iscomplexobj(x):
         return _get_memory_ptrs_kernel(x)
     return join.concatenate([
         _get_memory_ptrs_kernel(x.real),

@@ -13,20 +13,13 @@ from cupy.cuda cimport memory
 
 import warnings
 
-import numpy
-
 import cupy
 import cupy._core.core as core
 from cupy.cuda cimport stream as py_stream_module
 
-# See also _util.pyx. older NumPy versions will cause crashes if we add
-# bfloat16 loops, so don't enable it.
-bfloat16 = None
-if numpy.lib.NumpyVersion(numpy.__version__) >= "2.1.2":
-    try:
-        from ml_dtypes import bfloat16
-    except ImportError:
-        pass
+# Use the same NumPy/ml_dtypes version gates as the ufunc loops.
+from cupy._util import BC32 as bcomplex32, BF16 as bfloat16, C32 as complex32
+from cupy._util import BC32_DTYPE, BF16_DTYPE, C32_DTYPE
 
 
 cdef const char* CAPSULE_NAME = "dltensor"
@@ -34,10 +27,11 @@ cdef const char* CAPSULE_NAME_VER = "dltensor_versioned"
 cdef const char* USED_CAPSULE_NAME = "used_dltensor"
 cdef const char* USED_CAPSULE_NAME_VER = "used_dltensor_versioned"
 
-# The highest major and minor DLPack version currently implemented and that
-# will be usually exported.
+# The highest DLPack version we request on import. On export, use the
+# oldest version that supports the exported dtype.
 cdef uint32_t IMPL_VER_MAJOR = 1
-cdef uint32_t IMPL_VER_MINOR = 0
+cdef uint32_t IMPL_VER_MINOR = 4
+cdef uint32_t BCOMPLEX_VER_MINOR = 4
 
 
 cdef void pycapsule_deleter(object dltensor) noexcept:
@@ -79,7 +73,9 @@ cdef uint8_t get_dlpack_dtype_code_itemsize(
     cdef char kind = descr.kind
 
     size[0] = descr.itemsize
-    if kind == b'u':
+    if type(descr) is BC32_DTYPE:
+        return <uint8_t>kDLBcomplex
+    elif kind == b'u':
         return <uint8_t>kDLUInt
     elif kind == b'i':
         return <uint8_t>kDLInt
@@ -91,8 +87,10 @@ cdef uint8_t get_dlpack_dtype_code_itemsize(
         return <uint8_t>kDLBool
     else:
         # One-off special handling for `ml_dtypes`
-        if descr.name == "bfloat16":
+        if type(descr) is BF16_DTYPE:
             return <uint8_t>kDLBfloat
+        elif type(descr) is C32_DTYPE:
+            return <uint8_t>kDLComplex
         else:
             raise BufferError('dtype is not supported for dlpack export')
 
@@ -155,7 +153,8 @@ cpdef object toDlpack(
 
 
 cdef object _toDlpack(
-    _ndarray_base array, bint use_versioned, bint to_cpu, bint ensure_copy
+    _ndarray_base array, bint use_versioned, bint to_cpu, bint ensure_copy,
+    tuple max_version=None
 ):
     cdef DLManagedTensor* dlm_tensor
     cdef DLManagedTensorVersioned* dlm_tensor_ver
@@ -172,6 +171,12 @@ cdef object _toDlpack(
     cdef size_t dtype_itemsize
     dtype_code = get_dlpack_dtype_code_itemsize(
             <cnp.dtype>array.dtype, &dtype_itemsize)
+    cdef uint32_t version_minor = 0
+    if dtype_code == kDLBcomplex:
+        version_minor = BCOMPLEX_VER_MINOR
+        if (max_version is not None
+                and max_version < (IMPL_VER_MAJOR, version_minor)):
+            raise BufferError('bcomplex32 requires DLPack 1.4 or newer')
 
     # Fetch device information since we need it to deal with CPU logic.
     cdef DLDevice device = get_dlpack_device(array)
@@ -218,7 +223,7 @@ cdef object _toDlpack(
 
         # "Versioned" specific initialization:
         dlm_tensor_ver.version.major = IMPL_VER_MAJOR
-        dlm_tensor_ver.version.minor = IMPL_VER_MINOR
+        dlm_tensor_ver.version.minor = version_minor
 
         # CuPy arrays are writeable but may be copied if copying to the CPU.
         dlm_tensor_ver.flags = 0
@@ -465,13 +470,28 @@ cdef inline _ndarray_base _dlpack_to_cupy_array(dltensor):
         else:
             raise TypeError('float{} is not supported.'.format(bits))
     elif dtype.code == kDLComplex:
-        # TODO(leofang): support complex32
-        if bits == 64:
+        if bits == 32:
+            if complex32 is None:
+                raise NotImplementedError(
+                    'CuPy does not support complex32. Please install '
+                    'ml_dtypes (0.7 or newer) to use complex32.'
+                )
+            cp_dtype = complex32
+        elif bits == 64:
             cp_dtype = cupy.complex64
         elif bits == 128:
             cp_dtype = cupy.complex128
         else:
             raise TypeError('complex{} is not supported.'.format(bits))
+    elif dtype.code == kDLBcomplex:
+        if bits != 32:
+            raise TypeError(f'{bits}-bit bfloat complex is not supported')
+        if bcomplex32 is None:
+            raise NotImplementedError(
+                'CuPy does not support bcomplex32. Please install '
+                'ml_dtypes (0.7 or newer) to use bcomplex32.'
+            )
+        cp_dtype = bcomplex32
     elif dtype.code == kDLBool:
         if bits == 8:
             cp_dtype = cupy.bool_

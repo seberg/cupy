@@ -8,6 +8,7 @@ from numpy import linalg
 import cupy
 import cupy._util
 from cupy import _core
+from cupy._util import BC32_DTYPE, C32_DTYPE
 
 
 _default_precision = os.getenv('CUPY_DEFAULT_PRECISION')
@@ -77,6 +78,9 @@ def linalg_common_type(*arrays, reject_float16=True):
         result_dtype (dtype): The dtype of (possibly complex) output(s).
     """
     dtypes = [arr.dtype for arr in arrays]
+    for dtype in dtypes:
+        if type(dtype) is C32_DTYPE or type(dtype) is BC32_DTYPE:
+            raise TypeError(f'{dtype} is unsupported in linalg')
     if reject_float16 and 'float16' in dtypes:
         raise TypeError('float16 is unsupported in linalg')
 

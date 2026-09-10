@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy
 
 import cupy
+from cupy._core._dtype import get_kind
 from cupy._warnings import warn_external
 
 
@@ -31,7 +32,7 @@ def iscomplex(x):
         return numpy.iscomplex(x)
     if not isinstance(x, cupy.ndarray):
         return cupy.asarray(numpy.iscomplex(x))
-    if x.dtype.kind == 'c':
+    if get_kind(x.dtype) == ord('c'):
         return x.imag != 0
     return cupy.zeros(x.shape, bool)
 
@@ -62,7 +63,7 @@ def iscomplexobj(x):
     """
     if not isinstance(x, cupy.ndarray):
         return numpy.iscomplexobj(x)
-    return x.dtype.kind == 'c'
+    return get_kind(x.dtype) == ord('c')
 
 
 def isfortran(a):
@@ -155,7 +156,7 @@ def isreal(x):
         return numpy.isreal(x)
     if not isinstance(x, cupy.ndarray):
         return cupy.asarray(numpy.isreal(x))
-    if x.dtype.kind == 'c':
+    if get_kind(x.dtype) == ord('c'):
         return x.imag == 0
     return cupy.ones(x.shape, bool)
 
@@ -186,4 +187,4 @@ def isrealobj(x):
     """
     if not isinstance(x, cupy.ndarray):
         return numpy.isrealobj(x)
-    return x.dtype.kind != 'c'
+    return get_kind(x.dtype) != ord('c')

@@ -8,6 +8,7 @@ import graphlib
 import numpy
 
 import cupy
+from cupy import _util
 from cupy._core cimport _dtype
 from cupy._core.internal cimport cached_object
 
@@ -275,21 +276,20 @@ cdef _setup_type_dict():
     for t in ('cudaTextureObject_t',):
         _typenames[t] = (t, None)
 
-    # See also _util.pyx. older NumPy versions will cause crashes if we add
-    # bfloat16 loops, so don't enable it.
-    if numpy.lib.NumpyVersion(numpy.__version__) >= "2.1.2":
-        try:
-            import ml_dtypes
-        except ImportError:
-            pass
-        else:
-            dt = numpy.dtype(ml_dtypes.bfloat16)
-            _dtype_kind_size_dict[dt] = ("V", 2)
-            _typenames[dt] = (
-                "bfloat16", '#include "cupy/bfloat16.cuh"')
-            _dtype_kind_size_dict[dt.type] = ("V", 2)
-            _typenames[dt.type] = (
-                "bfloat16", '#include "cupy/bfloat16.cuh"')
+    # Use the same NumPy/ml_dtypes version gates as the ufunc loops.
+    from cupy._util import BF16, C32, BC32
+    for name, scalar_type in (("bfloat16", BF16), ("complex32", C32),
+                              ("bcomplex32", BC32)):
+        if scalar_type is None:
+            continue
+
+        dt = numpy.dtype(scalar_type)
+        info = (name, f'#include "cupy/{name}.cuh"')
+        kind_size = (dt.kind, dt.itemsize)
+        _typenames[dt] = info
+        _typenames[dt.type] = info
+        _dtype_kind_size_dict[dt] = kind_size
+        _dtype_kind_size_dict[dt.type] = kind_size
 
 _setup_type_dict()
 
@@ -456,7 +456,14 @@ cpdef str _get_cuda_scalar_repr(obj, dtype):
             return f'thrust::complex<float>({obj.real}, {obj.imag})'
         elif dtype.itemsize == 16:
             return f'thrust::complex<double>({obj.real}, {obj.imag})'
-    elif dtype.name == "bfloat16":
+
+    if type(dtype) is _util.C32_DTYPE or type(dtype) is _util.BC32_DTYPE:
+        float32 = numpy.dtype(numpy.float32)
+        value = complex(obj)
+        real_repr = _get_cuda_scalar_repr(value.real, float32)
+        imag_repr = _get_cuda_scalar_repr(value.imag, float32)
+        return f"{dtype.name}({real_repr}, {imag_repr})"
+    elif type(dtype) is _util.BF16_DTYPE:
         # NOTE(seberg): It would be nice to find a more extensible path here.
         float_repr = _get_cuda_scalar_repr(obj, numpy.dtype(numpy.float32))
         return f"bfloat16({float_repr})"

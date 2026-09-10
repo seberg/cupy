@@ -7,6 +7,8 @@ cdef bytes all_type_chars_b
 
 cdef bint check_supported_dtype(cnp.dtype dtype, bint error) except -1
 cpdef get_dtype(t)
+cpdef char get_kind(cnp.dtype dtype) except? -1
+cdef cnp.dtype get_real_dtype(cnp.dtype dtype)
 cpdef tuple get_dtype_with_itemsize(t, bint check_support)
 cpdef int to_cuda_dtype(dtype, bint is_half_allowed=*) except -1
 

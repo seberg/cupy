@@ -6,7 +6,7 @@ from cupy import _core
 from cupy._core import _routines_math as _math
 from cupy._core import fusion
 from cupy.lib import stride_tricks
-from cupy._util import bf16_loop
+from cupy._util import bc32_loop, bf16_loop, c32_loop
 
 import numpy
 
@@ -86,7 +86,7 @@ def _fft_convolve(a1, a2, mode):
         offset = 1 - a2.shape[-1] % 2
 
     # if either of them is complex, the dtype after multiplication will also be
-    if a1.dtype.kind == 'c' or a2.dtype.kind == 'c':
+    if cupy.iscomplexobj(a1) or cupy.iscomplexobj(a2):
         fft, ifft = cupy.fft.fft, cupy.fft.ifft
     else:
         fft, ifft = cupy.fft.rfft, cupy.fft.irfft
@@ -197,7 +197,8 @@ cbrt = _core.create_ufunc(
 square = _core.create_ufunc(
     'cupy_square',
     ('b->b', 'B->B', 'h->h', 'H->H', 'i->i', 'I->I', 'l->l', 'L->L', 'q->q',
-     'Q->Q', 'e->e', *bf16_loop(), 'f->f', 'd->d', 'F->F', 'D->D'),
+     'Q->Q', 'e->e', *bf16_loop(), 'f->f', 'd->d',
+     *c32_loop(), *bc32_loop(), 'F->F', 'D->D'),
     'out0 = in0 * in0',
     doc='''Elementwise square function.
 
@@ -224,12 +225,11 @@ fabs = _core.create_ufunc(
 _signed_sign = 'out0 = (in0 > 0) - (in0 < 0)'
 _unsigned_sign = 'out0 = in0 > 0'
 _complex_sign = '''
-using real_t = in0_type::value_type;
-real_t abs_val = abs(in0);
+auto abs_val = abs(in0);
 if (abs_val == 0) {
   out0 = static_cast<in0_type>(0);
 } else {
-  out0 = in0 / abs_val;
+  out0 = out0_type(in0.real() / abs_val, in0.imag() / abs_val);
 }
 '''
 _float_sign = '''
@@ -248,6 +248,7 @@ sign = _core.create_ufunc(
      ('l->l', _signed_sign), ('L->L', _unsigned_sign),
      ('q->q', _signed_sign), ('Q->Q', _unsigned_sign),
      'e->e', *bf16_loop(), 'f->f', 'd->d',
+     *c32_loop(code=_complex_sign), *bc32_loop(code=_complex_sign),
      ('F->F', _complex_sign), ('D->D', _complex_sign)),
     _float_sign,
     doc='''Elementwise sign function.
@@ -476,7 +477,7 @@ def real_if_close(a, tol=100):
 
     .. seealso:: :func:`numpy.real_if_close`
     """
-    if not issubclass(a.dtype.type, cupy.complexfloating):
+    if not cupy.iscomplexobj(a):
         return a
     if tol > 1:
         f = numpy.finfo(a.dtype.type)
@@ -512,7 +513,7 @@ def _get_interp_kernel(is_complex):
         else if (x_idx >= len - 1) { y = right[0]; }
         else if (x[i] == fx[x_idx]) { y = fy[x_idx]; }
         else {
-            const Z slope = (value_t)(fy[x_idx+1] - fy[x_idx]) / \
+            const Z slope = ((value_t)fy[x_idx+1] - (value_t)fy[x_idx]) / \
                             ((real_t)fx[x_idx+1] - (real_t)fx[x_idx]);
             Z out = slope * ((real_t)x[i] - (real_t)fx[x_idx]) \
                     + (value_t)fy[x_idx];
@@ -599,7 +600,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
 
     # NumPy always returns float64 or complex128, so we upcast all values
     # on the fly in the kernel
-    out_dtype = 'D' if fp.dtype.kind == 'c' else 'd'
+    out_dtype = 'D' if cupy.iscomplexobj(fp) else 'd'
     output = cupy.empty(x.shape, dtype=out_dtype)
     idx = cupy.searchsorted(xp, x, side='right')
     left = fp[0] if left is None else cupy.array(left, fp.dtype)

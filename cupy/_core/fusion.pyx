@@ -837,8 +837,7 @@ class Fusion(object):
         cdef list params_info = []
         for arg in args:
             if isinstance(arg, core.ndarray):
-                # Key on dtype, not dtype.char: bfloat16 and complex32 both
-                # use char 'E'.
+                # Do not rely on dtype characters for ml_dtypes.
                 params_info.append(arg.dtype)
                 params_info.append(arg.ndim)
             elif isinstance(arg, numpy.generic):

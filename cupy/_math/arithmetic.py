@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from cupy import _core
 from cupy._core import fusion
-from cupy._util import bf16_loop
+from cupy._util import bc32_loop, bf16_loop, c32_loop
 
 
 add = _core.add
@@ -15,6 +15,8 @@ reciprocal = _core.create_ufunc(
      *bf16_loop(code='out0 = 1 / in0'),
      ('f', 'out0 = 1 / in0'),
      ('d', 'out0 = 1 / in0'),
+     *c32_loop(code='out0 = in0_type(1) / in0'),
+     *bc32_loop(code='out0 = in0_type(1) / in0'),
      ('F', 'out0 = in0_type(1) / in0'),
      ('D', 'out0 = in0_type(1) / in0')),
     'out0 = in0 == 0 ? 0 : (1 / in0)',

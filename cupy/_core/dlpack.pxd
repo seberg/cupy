@@ -49,6 +49,7 @@ cdef extern from './include/cupy/_dlpack/dlpack.h' nogil:
         kDLBfloat
         kDLComplex
         kDLBool
+        kDLBcomplex
 
     ctypedef struct DLDataType:
         uint8_t code
@@ -87,5 +88,5 @@ cpdef object toDlpack(
     bint ensure_copy=*, stream=*) except +
 cdef object _toDlpack(
     _ndarray_base array, bint use_versioned, bint to_cpu,
-    bint ensure_copy) except +
+    bint ensure_copy, tuple max_version=*) except +
 cpdef _ndarray_base fromDlpack(object dltensor) except +

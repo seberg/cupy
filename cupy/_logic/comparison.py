@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import numpy
-
 import cupy
 from cupy import _core
+from cupy._core._dtype import get_kind
 from cupy._logic import content
 
 
@@ -125,8 +124,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     """
     a = cupy.asanyarray(a)
     b = cupy.asanyarray(b)
-    if (a.dtype in [numpy.complex64, numpy.complex128]) or \
-       (b.dtype in [numpy.complex64, numpy.complex128]):
+    if get_kind(a.dtype) == ord('c') or get_kind(b.dtype) == ord('c'):
         return _is_close_complex(a, b, rtol, atol, equal_nan)
     else:
         return _is_close(a, b, rtol, atol, equal_nan)

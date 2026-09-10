@@ -50,7 +50,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
     """
     if not issubclass(x.dtype.type, numpy.inexact):
-        x = x.astype(float)
+        x = x.astype(numpy.complex64 if cupy.iscomplexobj(x) else float)
 
     # Immediately handle some default, simple, fast, and common cases.
     if axis is None:

@@ -34,6 +34,7 @@ cpdef enum:
     CUDA_R_32I = 10  # 32 bit real as a signed integer
     CUDA_C_32I = 11  # 32 bit complex as a pair of signed integers
     CUDA_R_16BF = 14  # bfloat16 real
+    CUDA_C_16BF = 15  # bfloat16 complex
 
     # CUDA Limits
     cudaLimitStackSize = 0x00

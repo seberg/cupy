@@ -225,55 +225,89 @@ def is_shutting_down(_shutting_down=_shutting_down):
 
 
 try:
-    # We cannot add loops for bfloat16 on because the loops existance alone
-    # means NumPy code-paths are used that will lead to segfaults.
-    # (I.e. these crashes happen even without bfloat16 ever being used.)
+    # On older NumPy versions, registering ml_dtypes loops can trigger
+    # segfaults even when the inputs never use those dtypes.
     if numpy.lib.NumpyVersion(numpy.__version__) < "2.1.2":
         raise ImportError("NumPy had a critical result-type issue")
     import ml_dtypes
 except ImportError:
-    BF16 = None
+    ml_dtypes = None
 
-    def bf16_loop(in_types=1, out_types=1, code=None):
-        """No-op when bfloat16 is not available.
 
-        This helper is used to add bfloat16 support to ufuncs.
-        When ml_dtypes is not available, it returns an empty tuple,
-        effectively making bfloat16 loops a no-op.
-        """
-        return ()
-else:
-    BF16 = numpy.dtype(ml_dtypes.bfloat16).type
+cdef _get_ml_dtype(str name):
+    """The scalar type of an `ml_dtypes` dtype or None if unavailable.
 
-    def bf16_loop(in_types=1, out_types=1, code=None):
-        """Define bfloat16 loop for ufuncs.
+    `complex32` and `bcomplex32` were only added in ml_dtypes 0.6, so an
+    older version may provide `bfloat16` only.
+    """
+    if ml_dtypes is None:
+        return None
+    scalar_type = getattr(ml_dtypes, name, None)
+    if scalar_type is None:
+        return None
+    return numpy.dtype(scalar_type).type
 
-        This helper generates type signatures for bfloat16 operations in
-        ufuncs to be used with unpacking: *bf16_loop(...).
-        in/out types can be a number of bfloat16 or precise type specifiers we
-        convert them to dtypes for now (to sit in for the `type(dtype)` which
-        is in theory more spot-on but in practice the same).
 
-        For mixed signatures, supports `None` as an alias for bfloat16.
+BF16 = _get_ml_dtype("bfloat16")
+# Older ml_dtypes versions have unsafe cast behavior between the narrow
+# complex types, which can select the wrong ufunc loop and return garbage.
+C32 = BC32 = None
+if (ml_dtypes is not None
+        and numpy.lib.NumpyVersion(ml_dtypes.__version__) >= "0.7.0"):
+    C32 = _get_ml_dtype("complex32")
+    BC32 = _get_ml_dtype("bcomplex32")
 
-        NOTE: Always insert after a matching float16 loop to make sure the
-        half precision loop is preferred for odd cases (such as int8 being --
-        probably incorrectly -- promoted to float16).
-        """
-        # Convert int to tuple of bfloat16 types
+# DType classes are distinct from the scalar classes above.
+BF16_DTYPE = type(numpy.dtype(BF16)) if BF16 is not None else None
+C32_DTYPE = type(numpy.dtype(C32)) if C32 is not None else None
+BC32_DTYPE = type(numpy.dtype(BC32)) if BC32 is not None else None
+
+
+def _make_loop_helper(scalar_type, str name, str dtype_name):
+    """Build the ufunc loop helper for one of the `ml_dtypes` types.
+
+    The returned helper generates type signatures to be used with unpacking:
+    ``*bf16_loop(...)``.  ``in_types``/``out_types`` are either a count of
+    arguments of ``dtype_name`` or precise type specifiers, which we convert
+    to dtypes for now (to sit in for the `type(dtype)` which is in theory
+    more spot-on but in practice the same).  For mixed signatures, `None` is
+    an alias for ``dtype_name``.
+
+    When the dtype is unavailable the helper returns an empty tuple, so that
+    the loop is simply not registered.
+
+    NOTE: Always insert a loop after the matching NumPy one (e.g. bfloat16
+    after float16) to make sure the NumPy dtype is preferred for odd cases
+    (such as int8 being -- probably incorrectly -- promoted to float16).
+    """
+    @cython.binding(True)
+    def loop(in_types=1, out_types=1, code=None):
+        if scalar_type is None:
+            return ()
+
         if isinstance(in_types, int):
-            in_tuple = (BF16,) * in_types
+            in_tuple = (scalar_type,) * in_types
         else:
-            in_tuple = tuple(in_types)
             in_tuple = tuple(
-                BF16 if t is None else t for t in in_tuple)
+                scalar_type if t is None else t for t in in_types)
 
         if isinstance(out_types, int):
-            out_tuple = (BF16,) * out_types
+            out_tuple = (scalar_type,) * out_types
         else:
-            out_tuple = tuple(out_types)
             out_tuple = tuple(
-                BF16 if t is None else t for t in out_tuple)
+                scalar_type if t is None else t for t in out_types)
 
         signature = [in_tuple, out_tuple]
         return ((signature, code),)
+
+    loop.__name__ = name
+    loop.__qualname__ = name
+    loop.__doc__ = f"Define the {dtype_name} loop for a ufunc."
+    return loop
+
+
+bf16_loop = _make_loop_helper(BF16, "bf16_loop", "bfloat16")
+
+# Register complex32 before bcomplex32 (as float16 comes before bfloat16).
+c32_loop = _make_loop_helper(C32, "c32_loop", "complex32")
+bc32_loop = _make_loop_helper(BC32, "bc32_loop", "bcomplex32")

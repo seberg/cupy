@@ -7,6 +7,7 @@ import warnings
 
 from cupy_backends.cuda.api cimport runtime
 from cupy.exceptions import ComplexWarning
+from cupy._util import BF16_DTYPE, C32_DTYPE, BC32_DTYPE
 
 
 cdef str all_type_chars = '?bhilqBHILQefdFD'
@@ -92,6 +93,12 @@ cdef _init_dtype_dict():
 
 _init_dtype_dict()
 
+cdef cnp.dtype _float16_dtype = _dtype_dict['e'][0]
+cdef cnp.dtype _float32_dtype = _dtype_dict['f'][0]
+cdef cnp.dtype _float64_dtype = _dtype_dict['d'][0]
+cdef cnp.dtype _bfloat16_dtype = (
+    BF16_DTYPE() if BF16_DTYPE is not None else None)
+
 
 @cython.profile(False)
 cpdef get_dtype(t):
@@ -99,6 +106,40 @@ cpdef get_dtype(t):
     if ret is None:
         return _dtype(t)
     return ret[0]
+
+
+# Extension dtypes may report kind "V" or "W" instead of a numeric kind,
+# but for code generation we need to know how they behave.
+cdef dict _ml_dtypes_kind = {
+    dtype_type: kind for dtype_type, kind in (
+        (BF16_DTYPE, ord('f')), (C32_DTYPE, ord('c')),
+        (BC32_DTYPE, ord('c'))) if dtype_type is not None
+}
+
+
+cpdef char get_kind(cnp.dtype dtype) except? -1:
+    """The dtype kind, with the `ml_dtypes` types mapped onto the kind that
+    describes their behavior inside a kernel.
+    """
+    cdef char kind = dtype.kind
+    if kind == "V" or kind == "W":
+        return _ml_dtypes_kind.get(type(dtype), kind)
+    return kind
+
+
+cdef cnp.dtype get_real_dtype(cnp.dtype dtype):
+    cdef int type_num = dtype.type_num
+    if type_num == cnp.NPY_CFLOAT:
+        return _float32_dtype
+    elif type_num == cnp.NPY_CDOUBLE:
+        return _float64_dtype
+
+    cdef type dtype_type = type(dtype)
+    if dtype_type is C32_DTYPE:
+        return _float16_dtype
+    elif dtype_type is BC32_DTYPE:
+        return _bfloat16_dtype
+    raise TypeError(f'Unsupported complex dtype: {dtype}')
 
 
 @cython.profile(False)
@@ -113,6 +154,15 @@ cpdef tuple get_dtype_with_itemsize(t, bint check_support):
     if check_support:
         check_supported_dtype(t, error=True)
     return t, t.itemsize
+
+
+# Do not rely on dtype characters for ml_dtypes.
+cdef dict _ml_dtypes_cuda_dtype = {
+    dtype_type: cuda_type for dtype_type, cuda_type in (
+        (BF16_DTYPE, <int>runtime.CUDA_R_16BF),
+        (C32_DTYPE, <int>runtime.CUDA_C_16F),
+        (BC32_DTYPE, <int>runtime.CUDA_C_16BF)) if dtype_type is not None
+}
 
 
 cpdef int to_cuda_dtype(dtype, bint is_half_allowed=False) except -1:
@@ -132,16 +182,15 @@ cpdef int to_cuda_dtype(dtype, bint is_half_allowed=False) except -1:
         return runtime.CUDA_C_32F
     elif dtype_char == 'D':
         return runtime.CUDA_C_64F
-    elif dtype_char is not dtype and dtype.name == "bfloat16":
-        # TODO(seberg): Better way to map this, doesn't support chars
-        # due to ml_dtypes using 'E' (for now 2025-01)
-        return runtime.CUDA_R_16BF
+    elif dtype_char is not dtype and type(dtype) in _ml_dtypes_cuda_dtype:
+        return _ml_dtypes_cuda_dtype[type(dtype)]
     elif dtype_char == 'E' and is_half_allowed:
-        # complex32, not supported in NumPy
+        # cuFFT's half precision complex, passed as a bare character since
+        # NumPy has no complex32 (see also ml_dtypes.complex32 above).
         return runtime.CUDA_C_16F
     elif dtype_char == 'b':
         return runtime.CUDA_R_8I
-    elif dtype_char is not dtype and dtype.name == "int32":
+    elif dtype_char is not dtype and dtype.type is numpy.int32:
         # int32's char is platform-dependent ('i' on Linux, 'l' on Windows)
         return runtime.CUDA_R_32I
     else:
@@ -157,8 +206,8 @@ cpdef void _raise_if_invalid_cast(
     """Raise an error if a cast is not valid.  Also checks whether the cast
     goes from complex to real and warns if it does.
 
-    The error raised can be customized by giving `obj`.  May pass a (lambda)
-    function to avoid string construction on success.
+    Use `argname` to customize the error. Pass a callable to avoid building
+    the string on success.
     This function exists mainly to build a similar error everywhere.
 
     """
@@ -167,12 +216,14 @@ cpdef void _raise_if_invalid_cast(
 
     to_dt = get_dtype(to_dt)  # may still be a type not a dtype instance
 
-    if casting == "same_kind" and from_dt.kind == to_dt.kind:
+    if (casting == "same_kind" and from_dt.kind == to_dt.kind
+            and from_dt.kind not in "VW"):
         # same-kind is the most common casting used and for NumPy dtypes.
+        # Extension/void kinds do not imply compatible numeric behavior.
         return
     if _numpy_can_cast(from_dt, to_dt, casting):
-        if casting == "unsafe" and from_dt.kind == "c" and to_dt.kind in "iuf":
-            # Complex warning, we are dropping the imagine part:
+        if (casting == "unsafe" and get_kind(from_dt) == 'c'
+                and get_kind(to_dt) in b'iuf'):
             warnings.warn(
                 'Casting complex values to real discards the imaginary part',
                 ComplexWarning)

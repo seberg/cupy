@@ -21,7 +21,7 @@ from cupy.cuda cimport texture
 from cupy._core cimport _accelerator
 from cupy._core cimport _carray
 from cupy._core cimport _scalar
-from cupy._core._dtype cimport get_dtype, _raise_if_invalid_cast
+from cupy._core._dtype cimport get_dtype, get_kind, _raise_if_invalid_cast
 from cupy._core._memory_range cimport may_share_bounds
 from cupy._core._scalar import get_typename as _get_typename
 from cupy._core cimport core
@@ -1470,8 +1470,8 @@ cdef class ElementwiseKernel:
 
 
 cdef str fix_cast_expr(src_type, dst_type, str expr):
-    src_kind = get_dtype(src_type).kind
-    dst_kind = get_dtype(dst_type).kind
+    cdef char src_kind = get_kind(src_type)
+    cdef char dst_kind = get_kind(dst_type)
     if src_kind == dst_kind:
         return expr
     if src_kind == 'b':

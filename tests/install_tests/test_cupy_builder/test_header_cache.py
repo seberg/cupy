@@ -47,8 +47,14 @@ def _write(root, name, source):
 def include_dir(tmp_path):
     tmp_path = tmp_path / 'include'
     _write(tmp_path, 'cupy/carray.cuh', '// common\n')
-    for dtype in ('float16', 'bfloat16', 'structview', 'unstructured_void'):
+    for dtype in ('float16', 'bfloat16', 'complex32', 'bcomplex32',
+                  'narrow_complex', 'structview', 'unstructured_void'):
         _write(tmp_path, f'cupy/{dtype}.cuh', '#include "cupy/carray.cuh"\n')
+    for dtype, component in (('complex32', 'float16'),
+                             ('bcomplex32', 'bfloat16')):
+        _write(tmp_path, f'cupy/{dtype}.cuh',
+               f'#include "cupy/{component}.cuh"\n'
+               '#include "cupy/narrow_complex.cuh"\n')
     _write(tmp_path, 'cupy/xsf/function.h', '// xsf\n')
     return tmp_path
 
@@ -59,7 +65,8 @@ def cache(include_dir, header_cache_keys):
 
 
 @pytest.mark.parametrize('group', [
-    'xsf', 'float16', 'bfloat16', 'structview', 'unstructured_void',
+    'xsf', 'float16', 'bfloat16', 'complex32', 'bcomplex32',
+    'narrow_complex', 'structview', 'unstructured_void',
 ])
 def test_optional_update(include_dir, group, header_cache_keys, get_cache_key):
     before = header_cache_keys.build_header_cache_keys(hip=False)
@@ -79,6 +86,22 @@ def test_optional_update(include_dir, group, header_cache_keys, get_cache_key):
     source = '#include "user_wrapper.h"'
     assert (get_cache_key(source, before)
             != get_cache_key(source, after))
+
+
+@pytest.mark.parametrize('dependency, affected', [
+    ('float16', {'complex32'}),
+    ('bfloat16', {'bcomplex32'}),
+    ('narrow_complex', {'complex32', 'bcomplex32'}),
+])
+def test_narrow_complex_dependencies(
+        include_dir, header_cache_keys, dependency, affected):
+    before = header_cache_keys.build_header_cache_keys(hip=False)
+    with (include_dir / f'cupy/{dependency}.cuh').open('a') as f:
+        f.write('// changed\n')
+    after = header_cache_keys.build_header_cache_keys(hip=False)
+    for group in ('common', 'complex32', 'bcomplex32'):
+        assert (before['keys'][group] != after['keys'][group]) == (
+            group in affected)
 
 
 def test_transitive_dependencies_and_cycles(include_dir, header_cache_keys):

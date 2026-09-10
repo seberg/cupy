@@ -427,7 +427,7 @@ cdef class _ndarray_base:
 
         return dlpack._toDlpack(
             self, use_versioned=use_versioned, to_cpu=to_cpu,
-            ensure_copy=copy is True)
+            ensure_copy=copy is True, max_version=max_version)
 
     def __dlpack_device__(self):
         cdef dlpack.DLDevice dldevice = dlpack.get_dlpack_device(self)
@@ -760,7 +760,8 @@ cdef class _ndarray_base:
 
         if self.size == 0:
             # skip copy
-            if self.dtype.kind == 'c' and newarray.dtype.kind not in 'bc':
+            if (_dtype.get_kind(self.dtype) == 'c'
+                    and _dtype.get_kind(newarray.dtype) not in b'bc'):
                 warnings.warn(
                     'Casting complex values to real discards the imaginary '
                     'part',
@@ -829,8 +830,8 @@ cdef class _ndarray_base:
             return self.copy()
 
         # Complex types: byteswap real and imaginary components independently
-        if numpy.issubdtype(dtype, numpy.complexfloating):
-            component_dtype = numpy.finfo(dtype).dtype
+        if _dtype.get_kind(dtype) == 'c':
+            component_dtype = _dtype.get_real_dtype(dtype)
             contig = _internal_ascontiguousarray(self).ravel()
             float_view = contig.view(component_dtype)
             swapped = _byteswap_dispatch(float_view)

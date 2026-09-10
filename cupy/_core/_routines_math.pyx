@@ -2,6 +2,7 @@ import string
 import sys
 
 import numpy
+cimport numpy as cnp
 
 import cupy
 from cupy._core._reduction import create_reduction_func
@@ -12,12 +13,12 @@ from cupy._core._ufuncs import elementwise_copy
 import cupy._core.core as core
 from cupy._core cimport internal
 from cupy import _util
-from cupy._util import bf16_loop
+from cupy._util import BF16, bc32_loop, bf16_loop, c32_loop
 
 from cupy_backends.cuda.api cimport runtime
 from cupy._core cimport _accelerator
 from cupy._core._cuda_compute_scan cimport cuda_compute_scan
-from cupy._core._dtype cimport get_dtype
+from cupy._core._dtype cimport get_kind, get_real_dtype
 from cupy._core.core cimport _ndarray_init
 from cupy._core.core cimport compile_with_cache
 from cupy._core.core cimport _ndarray_base
@@ -35,15 +36,16 @@ except ImportError:
 
 
 cdef _ndarray_base _ndarray_conj(_ndarray_base self):
-    if self.dtype.kind == 'c':
+    if get_kind(self.dtype) == 'c':
         return _conjugate(self)
     else:
         return self
 
 
 cdef _ndarray_base _ndarray_real_getter(_ndarray_base self):
-    if self.dtype.kind == 'c':
-        dtype = get_dtype(self.dtype.char.lower())
+    cdef cnp.dtype dtype
+    if get_kind(self.dtype) == 'c':
+        dtype = get_real_dtype(self.dtype)
         view = core.ndarray.__new__(
             type(self), shape=self._shape, dtype=dtype, _obj=self,
             memptr=self.data, strides=self._strides)
@@ -58,9 +60,10 @@ cdef _ndarray_base _ndarray_real_setter(_ndarray_base self, value):
 
 
 cdef _ndarray_base _ndarray_imag_getter(_ndarray_base self):
+    cdef cnp.dtype dtype
     cdef memory.MemoryPointer memptr
-    if self.dtype.kind == 'c':
-        dtype = get_dtype(self.dtype.char.lower())
+    if get_kind(self.dtype) == 'c':
+        dtype = get_real_dtype(self.dtype)
         memptr = self.data
         # Make the memory pointer point to the first imaginary element.
         # Note that even if the array doesn't have a valid memory (e.g. 0-size
@@ -80,7 +83,7 @@ cdef _ndarray_base _ndarray_imag_getter(_ndarray_base self):
 
 
 cdef _ndarray_base _ndarray_imag_setter(_ndarray_base self, value):
-    if self.dtype.kind == 'c':
+    if get_kind(self.dtype) == 'c':
         elementwise_copy(value, _ndarray_imag_getter(self))
     else:
         raise TypeError('cupy.ndarray does not have imaginary part to set')
@@ -810,13 +813,19 @@ cpdef _ndarray_base _nanprod(_ndarray_base a, axis, dtype, out, keepdims):
         return _nanprod_keep_dtype(a, axis, dtype, out, keepdims)
 
 
+_narrow_complex_sumprod_types = (
+    *c32_loop(code=(None, None, None, 'thrust::complex<float>')),
+    *bc32_loop(code=(None, None, None, 'thrust::complex<float>')),
+)
+
+
 if sys.platform == "win32":
     _sumprod_types = (
         '?->q', 'b->q', 'B->Q', 'h->q', 'H->Q', 'i->q', 'I->Q', 'l->q', 'L->Q',
         'q->q', 'Q->Q',
         ('e->e', (None, None, None, 'float')),
         *bf16_loop(code=(None, None, None, 'float')),
-        'f->f', 'd->d', 'F->F', 'D->D',
+        'f->f', 'd->d', *_narrow_complex_sumprod_types, 'F->F', 'D->D',
     )
 else:
     _sumprod_types = (
@@ -824,7 +833,7 @@ else:
         'q->q', 'Q->Q',
         ('e->e', (None, None, None, 'float')),
         *bf16_loop(code=(None, None, None, 'float')),
-        'f->f', 'd->d', 'F->F', 'D->D',
+        'f->f', 'd->d', *_narrow_complex_sumprod_types, 'F->F', 'D->D',
     )
 
 
@@ -840,7 +849,7 @@ _sum_keep_dtype = create_reduction_func(
      'q->q', 'Q->Q',
      ('e->e', (None, None, None, 'float')),
      *bf16_loop(code=(None, None, None, 'float')),
-     'f->f', 'd->d', 'F->F', 'D->D'),
+     'f->f', 'd->d', *_narrow_complex_sumprod_types, 'F->F', 'D->D'),
     ('in0', 'a + b', 'out0 = type_out0_raw(a)', None), 0,
     compute_opkind='PLUS')
 
@@ -857,14 +866,14 @@ _nansum_keep_dtype = create_reduction_func(
      'q->q', 'Q->Q',
      ('e->e', (None, None, None, 'float')),
      *bf16_loop(code=(None, None, None, 'float')),
-     'f->f', 'd->d', 'F->F', 'D->D'),
+     'f->f', 'd->d', *_narrow_complex_sumprod_types, 'F->F', 'D->D'),
     ('(in0 == in0) ? in0 : type_in0_raw(0)',
      'a + b', 'out0 = type_out0_raw(a)', None), 0, compute_opkind='PLUS')
 
 
 _nansum_complex_dtype = create_reduction_func(
     'cupy_nansum_complex_dtype',
-    ('F->F', 'D->D'),
+    (*_narrow_complex_sumprod_types, 'F->F', 'D->D'),
     ('''
     type_in0_raw((in0.real() == in0.real()) ? in0.real() : 0,
                  (in0.imag() == in0.imag()) ? in0.imag() : 0)
@@ -884,7 +893,7 @@ _prod_keep_dtype = create_reduction_func(
      'q->q', 'Q->Q',
      ('e->e', (None, None, None, 'float')),
      *bf16_loop(code=(None, None, None, 'float')),
-     'f->f', 'd->d', 'F->F', 'D->D'),
+     'f->f', 'd->d', *_narrow_complex_sumprod_types, 'F->F', 'D->D'),
     ('in0', 'a * b', 'out0 = type_out0_raw(a)', None), 1,
     compute_opkind='MULTIPLIES')
 
@@ -901,14 +910,14 @@ _nanprod_keep_dtype = create_reduction_func(
      'q->q', 'Q->Q',
      ('e->e', (None, None, None, 'float')),
      *bf16_loop(code=(None, None, None, 'float')),
-     'f->f', 'd->d', 'F->F', 'D->D'),
+     'f->f', 'd->d', *_narrow_complex_sumprod_types, 'F->F', 'D->D'),
     ('(in0 == in0) ? in0 : type_in0_raw(1)',
      'a * b', 'out0 = type_out0_raw(a)', None), 1, compute_opkind='MULTIPLIES')
 
 
 _nanprod_complex_dtype = create_reduction_func(
     'cupy_nanprod_complex_dtype',
-    ('F->F', 'D->D'),
+    (*_narrow_complex_sumprod_types, 'F->F', 'D->D'),
     ('''
     type_in0_raw((in0.real() == in0.real()) ? in0.real() : 1,
                  (in0.imag() == in0.imag()) ? in0.imag() : 1)
@@ -928,7 +937,8 @@ cdef create_arithmetic(
         (('??->?', boolop),
          'bb->b', 'BB->B', 'hh->h', 'HH->H', 'ii->i', 'II->I', 'll->l',
          'LL->L', 'qq->q', 'QQ->Q',
-         'ee->e', *bf16_loop(2), 'ff->f', 'dd->d', 'FF->F', 'DD->D'),
+         'ee->e', *bf16_loop(2), 'ff->f', 'dd->d',
+         *c32_loop(2), *bc32_loop(2), 'FF->F', 'DD->D'),
         'out0 = in0 %s in1' % op,
         doc=doc,
         cutensor_op=cutensor_op,
@@ -949,6 +959,8 @@ _conjugate = create_ufunc(
     'cupy_conjugate',
     ('b->b', 'B->B', 'h->h', 'H->H', 'i->i', 'I->I', 'l->l', 'L->L', 'q->q',
      'Q->Q', 'e->e', *bf16_loop(), 'f->f', 'd->d',
+     *c32_loop(code='out0 = conj(in0)'),
+     *bc32_loop(code='out0 = conj(in0)'),
      ('F->F', 'out0 = conj(in0)'),
      ('D->D', 'out0 = conj(in0)')),
     'out0 = in0',
@@ -962,6 +974,8 @@ _conjugate = create_ufunc(
 _angle = create_ufunc(
     'cupy_angle',
     ('?->d', 'e->e', *bf16_loop(), 'f->f', 'd->d',
+     *c32_loop(1, 'e', 'out0 = arg(in0)'),
+     *bc32_loop(1, (BF16,), 'out0 = arg(in0)'),
      ('F->f', 'out0 = arg(in0)'),
      ('D->d', 'out0 = arg(in0)')),
     '''
@@ -977,6 +991,8 @@ _angle = create_ufunc(
 _angle_deg = create_ufunc(
     'cupy_angle_deg',
     ('?->d', 'e->e', *bf16_loop(), 'f->f', 'd->d',
+     *c32_loop(1, 'e', 'out0 = arg(in0) * (180.0 / M_PI)'),
+     *bc32_loop(1, (BF16,), 'out0 = arg(in0) * (180.0 / M_PI)'),
      ('F->f', 'out0 = arg(in0) * (180.0 / M_PI)'),
      ('D->d', 'out0 = arg(in0) * (180.0 / M_PI)')),
     '''
@@ -998,7 +1014,8 @@ _positive = create_ufunc(
     'cupy_positive',
     (('?->?', _positive_boolean_error),
      'b->b', 'B->B', 'h->h', 'H->H', 'i->i', 'I->I', 'l->l', 'L->L',
-     'q->q', 'Q->Q', 'e->e', *bf16_loop(), 'f->f', 'd->d', 'F->F', 'D->D'),
+     'q->q', 'Q->Q', 'e->e', *bf16_loop(), 'f->f', 'd->d',
+     *c32_loop(), *bc32_loop(), 'F->F', 'D->D'),
     'out0 = +in0',
     doc='''Takes numerical positive elementwise.
 
@@ -1017,7 +1034,8 @@ _negative = create_ufunc(
     'cupy_negative',
     (('?->?', _negative_boolean_error),
      'b->b', 'B->B', 'h->h', 'H->H', 'i->i', 'I->I', 'l->l', 'L->L',
-     'q->q', 'Q->Q', 'e->e', *bf16_loop(), 'f->f', 'd->d', 'F->F', 'D->D'),
+     'q->q', 'Q->Q', 'e->e', *bf16_loop(), 'f->f', 'd->d',
+     *c32_loop(), *bc32_loop(), 'F->F', 'D->D'),
     'out0 = -in0',
     doc='''Takes numerical negative elementwise.
 
@@ -1073,6 +1091,8 @@ _power = create_ufunc(
      *bf16_loop(2, 1, code='out0 = powf(in0, in1)'),
      ('ff->f', 'out0 = powf(in0, in1)'),
      ('dd->d', 'out0 = pow(in0, in1)'),
+     *c32_loop(2, code='out0 = complex_power(in0, in1)'),
+     *bc32_loop(2, code='out0 = complex_power(in0, in1)'),
      ('FF->F', 'out0 = complex_power(in0, in1)'),
      ('DD->D', 'out0 = complex_power(in0, in1)')),
     'out0 = integral_power(in0, in1)',
@@ -1110,14 +1130,16 @@ _subtract = create_arithmetic(
 _true_divide = create_ufunc(
     'cupy_true_divide',
     ('qq->d', 'qQ->d', 'Qq->d', 'QQ->d',
-     'ee->e', *bf16_loop(2), 'ff->f', 'dd->d', 'FF->F', 'DD->D'),
+     'ee->e', *bf16_loop(2), 'ff->f', 'dd->d',
+     *c32_loop(2), *bc32_loop(2), 'FF->F', 'DD->D'),
     'out0 = static_cast<out0_type>(in0) / static_cast<out0_type>(in1)',
     doc='''Elementwise true division (i.e. division as floating values).
 
     .. seealso:: :data:`numpy.true_divide`
 
     ''',
-    out_ops=('ee->e', *bf16_loop(2), 'ff->f', 'dd->d', 'FF->F', 'DD->D'),
+    out_ops=('ee->e', *bf16_loop(2), 'ff->f', 'dd->d',
+             *c32_loop(2), *bc32_loop(2), 'FF->F', 'DD->D'),
 )
 
 
@@ -1162,6 +1184,8 @@ _absolute = create_ufunc(
      *bf16_loop(code='out0 = fabsf(in0)'),
      ('f->f', 'out0 = fabsf(in0)'),
      ('d->d', 'out0 = fabs(in0)'),
+     *c32_loop(1, 'e', 'out0 = abs(in0)'),
+     *bc32_loop(1, (BF16,), 'out0 = abs(in0)'),
      ('F->f', 'out0 = abs(in0)'),
      ('D->d', 'out0 = abs(in0)')),
     'out0 = in0 > 0 ? in0 : -in0',
@@ -1174,7 +1198,8 @@ _absolute = create_ufunc(
 
 _sqrt = create_ufunc(
     'cupy_sqrt',
-    ('e->e', *bf16_loop(), 'f->f', 'd->d', 'F->F', 'D->D'),
+    ('e->e', *bf16_loop(), 'f->f', 'd->d',
+     *c32_loop(), *bc32_loop(), 'F->F', 'D->D'),
     'out0 = sqrt(in0)',
     doc='''Elementwise square root function.
 

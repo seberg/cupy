@@ -118,7 +118,7 @@ def vdot(a, b):
     """
     if a.size != b.size:
         raise ValueError('Axis dimension mismatch')
-    if a.dtype.kind == 'c':
+    if cupy.iscomplexobj(a):
         a = a.conj()
 
     return _core.tensordot_core(a, b, None, 1, 1, a.size, ())
