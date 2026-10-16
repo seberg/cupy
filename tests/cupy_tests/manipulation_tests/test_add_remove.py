@@ -194,17 +194,81 @@ class TestUnique:
         a = testing.shaped_random((100, 100), xp, dtype)
         return xp.unique(a, axis=1)
 
+    @testing.with_requires('numpy>=2.1')
+    @testing.for_all_dtypes()
+    @pytest.mark.parametrize('axis', [0, 1, -1])
     @testing.numpy_cupy_array_equal()
-    def test_unique_bool(self, xp):
-        a = testing.shaped_random((100, 3), xp, xp.bool_)
-        return xp.unique(a, axis=0)
+    def test_unique_axis_dtypes(self, xp, dtype, axis):
+        # Duplicates and tied leading keys exercise the full row ordering and
+        # the first-occurrence indices, including for noncontiguous inputs.
+        a = xp.array([
+            [[1, 0], [1, 0]],
+            [[0, 1], [0, 1]],
+            [[1, 0], [0, 1]],
+            [[1, 0], [1, 0]],
+            [[0, 1], [0, 0]],
+            [[1, 0], [0, 1]],
+        ], dtype=dtype)[:, :, ::-1]
+        a = xp.moveaxis(a, 0, axis)
+        return xp.unique(a, axis=axis, return_index=True,
+                         return_inverse=True, return_counts=True)
 
-    @testing.with_requires("numpy>=2.1")
+    @testing.with_requires('numpy>=2.1')
+    @testing.for_int_dtypes(no_bool=True)
     @testing.numpy_cupy_array_equal()
-    def test_unique_bool_return_all(self, xp):
-        a = testing.shaped_random((3, 100), xp, xp.bool_)
-        return xp.unique(a, return_index=True, return_inverse=True,
-                         return_counts=True, axis=1)
+    def test_unique_axis_integer_limits(self, xp, dtype):
+        limits = xp.iinfo(dtype)
+        a = xp.array([
+            [limits.max, limits.min],
+            [limits.min, limits.max],
+            [0, 0],
+            [limits.max, 0],
+            [limits.min, limits.max],
+        ], dtype=dtype)
+        return xp.unique(a, axis=0, return_index=True,
+                         return_inverse=True, return_counts=True)
+
+    @testing.with_requires('numpy>=2.1')
+    @testing.for_all_dtypes()
+    @testing.numpy_cupy_array_equal()
+    def test_unique_axis_1d(self, xp, dtype):
+        a = xp.array([1, 0, 1, 0], dtype=dtype)
+        return xp.unique(a, axis=0, return_index=True,
+                         return_inverse=True, return_counts=True)
+
+    @testing.with_requires('numpy>=2.1')
+    @testing.for_dtypes('efdFD')
+    @pytest.mark.parametrize('equal_nan', [True, False])
+    @testing.numpy_cupy_array_equal()
+    def test_unique_axis_nonfinite(self, xp, dtype, equal_nan):
+        values = [xp.inf, -xp.inf, xp.nan, 0, -0.0]
+        if xp.dtype(dtype).kind == 'c':
+            values += [complex(1, xp.nan), complex(xp.nan, 1),
+                       complex(xp.nan, xp.nan), 1j, -1j]
+        # Repeat nonfinite leading keys with different secondary keys and
+        # repeat entire rows. NaN-containing rows remain distinct with axis.
+        a = xp.array([[v, k] for v in values for k in (1, 0, 1)],
+                     dtype=dtype)
+        # NumPy's structured float16 comparator sorts NaNs first, unlike its
+        # lexsort and other floating dtypes. Use float32 as the reference for
+        # the usual NaNs-last order, preserving the output dtype below.
+        if xp is not cupy and xp.dtype(dtype).char == 'e':
+            a = a.astype(xp.float32)
+        ret = xp.unique(a, axis=0, equal_nan=equal_nan, return_index=True,
+                        return_inverse=True, return_counts=True)
+        return (ret[0].astype(dtype),) + ret[1:]
+
+    @testing.with_requires('numpy>=2.1')
+    @testing.for_all_dtypes()
+    @pytest.mark.parametrize('shape, axis', [
+        ((0,), 0), ((0, 3), 0), ((3, 0), 0),
+        ((3, 0, 2), 2), ((0, 0), 1),
+    ])
+    @testing.numpy_cupy_array_equal()
+    def test_unique_axis_empty_dtypes(self, xp, dtype, shape, axis):
+        a = xp.empty(shape, dtype=dtype)
+        return xp.unique(a, axis=axis, return_index=True,
+                         return_inverse=True, return_counts=True)
 
     @testing.for_all_dtypes(no_float16=True, no_bool=True, no_complex=True)
     @testing.numpy_cupy_array_equal()

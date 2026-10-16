@@ -258,51 +258,18 @@ def unique(ar, return_index=False, return_inverse=False,
 
     ar = cupy.moveaxis(ar, axis, 0)
 
-    # The array is reshaped into a contiguous 2D array
+    # Flatten each subarray into a row.
     orig_shape = ar.shape
-    idx = cupy.arange(0, orig_shape[0], dtype=cupy.intp)
     ar = ar.reshape(orig_shape[0], math.prod(orig_shape[1:]))
-    ar = cupy.ascontiguousarray(ar)
-    is_unsigned = cupy.issubdtype(ar.dtype, cupy.unsignedinteger)
-    is_complex = cupy.iscomplexobj(ar)
 
-    ar_cmp = ar
-    if is_unsigned:
-        ar_cmp = ar.astype(cupy.intp)
-
-    def compare_axis_elems(idx1, idx2):
-        left, right = ar_cmp[idx1], ar_cmp[idx2]
-        comp = cupy.trim_zeros(left - right, 'f')
-        if comp.shape[0] > 0:
-            diff = comp[0]
-            if is_complex and cupy.isnan(diff):
-                return True
-            return diff < 0
-        return False
-
-    # The array is sorted lexicographically using the first item of each
-    # element on the axis
-    sorted_indices = cupy.empty(orig_shape[0], dtype=cupy.intp)
-    queue = [(idx.tolist(), 0)]
-    while queue != []:
-        current, off = queue.pop(0)
-        if current == []:
-            continue
-
-        mid_elem = current[0]
-        left = []
-        right = []
-        for i in range(1, len(current)):
-            if compare_axis_elems(current[i], mid_elem):
-                left.append(current[i])
-            else:
-                right.append(current[i])
-
-        elem_pos = off + len(left)
-        queue.append((left, off))
-        queue.append((right, elem_pos + 1))
-
-        sorted_indices[elem_pos] = mid_elem
+    if ar.size:
+        # lexsort's last key is primary, so reverse the columns to sort rows
+        # with their first element as the primary key. Its stable sort keeps
+        # the first occurrence of each unique row for return_index.
+        sorted_indices = cupy.lexsort(ar[:, ::-1].T)
+    else:
+        # Empty subarrays compare equal, and lexsort needs at least one key.
+        sorted_indices = cupy.arange(ar.shape[0], dtype=cupy.intp)
 
     ar = ar[sorted_indices]
 
