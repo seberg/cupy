@@ -12,10 +12,6 @@ from cupy.testing._protocol_helpers import (
 
 
 def astype_without_warning(x, dtype, *args, **kwargs):
-    # Complex-to-bfloat16 casts disagree on ComplexWarning emission.
-    if (x.dtype.kind == 'c'
-            and numpy.dtype(dtype).name == 'bfloat16'):
-        pytest.skip('complex-to-bfloat16 casting warnings differ')
     dtype = numpy.dtype(dtype)
     if x.dtype.kind == 'c' and dtype.kind not in ['b', 'c']:
         with testing.assert_warns(ComplexWarning):
@@ -276,10 +272,6 @@ class TestArrayFill:
     @testing.for_all_dtypes_combination(('dtype1', 'dtype2'))
     @testing.numpy_cupy_array_equal(accept_error=ComplexWarning)
     def test_fill_with_cupy_scalar_ndarray(self, xp, dtype1, dtype2):
-        # Complex-to-bfloat16 fill disagrees on ComplexWarning emission.
-        if (numpy.dtype(dtype1).name == 'bfloat16'
-                and numpy.dtype(dtype2).kind == 'c'):
-            pytest.skip('complex-to-bfloat16 fill warnings differ')
         a = testing.shaped_arange((2, 3, 4), xp, dtype1)
         b = xp.ones((), dtype=dtype2)
         a.fill(b)

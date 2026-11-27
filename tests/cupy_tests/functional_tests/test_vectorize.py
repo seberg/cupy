@@ -26,6 +26,20 @@ _IS_HIP_LT7 = bool(_ROCM_VER_MAJOR != -1 and int(_ROCM_VER_MAJOR) < 7)
 @pytest.mark.skipif(_IS_HIP_LT7, reason="Skip on ROCm < 7 (HIP).")
 class TestVectorizeOps(unittest.TestCase):
 
+    @testing.with_requires('numpy>=2.5', 'ml_dtypes>=0.7')
+    def test_bfloat16_input(self):
+        from cupy._util import BF16
+
+        def identity(x):
+            return x
+
+        f = cupy.vectorize(identity)
+        for dtype in (numpy.float16, BF16, numpy.float32, BF16):
+            a = cupy.arange(6).astype(dtype)
+            result = f(a)
+            assert result.dtype == a.dtype
+            testing.assert_array_equal(result, a)
+
     def _run(self, func, xp, dtypes):
         f = xp.vectorize(func)
         args = [
@@ -34,7 +48,7 @@ class TestVectorizeOps(unittest.TestCase):
         ]
         return f(*args)
 
-    # bfloat16 dtype.char ('E') is not recognized by this path.
+    # NumPy (as of 2.5) vectorize cannot resolve bfloat16 output char ('E').
     @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol={'default': 1e-6, numpy.float16: 1.5e-3})
     def test_vectorize_reciprocal(self, xp, dtype):
@@ -44,7 +58,7 @@ class TestVectorizeOps(unittest.TestCase):
 
         return self._run(my_reciprocal, xp, [dtype])
 
-    # bfloat16 dtype.char ('E') is not recognized by this path.
+    # NumPy (as of 2.5) vectorize cannot resolve bfloat16 output char ('E').
     @testing.for_all_dtypes_combination(
         names=('dtype1', 'dtype2'), bfloat16=False)
     @testing.numpy_cupy_array_equal()
@@ -62,7 +76,7 @@ class TestVectorizeOps(unittest.TestCase):
 
         return self._run(my_sub, xp, [dtype, dtype])
 
-    # bfloat16 dtype.char ('E') is not recognized by this path.
+    # NumPy (as of 2.5) vectorize cannot resolve bfloat16 output char ('E').
     @testing.for_all_dtypes_combination(
         names=('dtype1', 'dtype2'), bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-6)
@@ -84,7 +98,7 @@ class TestVectorizeOps(unittest.TestCase):
         x1[x1 == 0] = 1
         return f(x1, x2)
 
-    # bfloat16 dtype.char ('E') is not recognized by this path.
+    # NumPy (as of 2.5) vectorize cannot resolve bfloat16 output char ('E').
     @testing.for_all_dtypes_combination(
         names=('dtype1', 'dtype2'), no_bool=True, no_complex=True,
         bfloat16=False)
@@ -107,7 +121,7 @@ class TestVectorizeOps(unittest.TestCase):
         x2[x2 == 0] = 1
         return f(x1, x2)
 
-    # bfloat16 dtype.char ('E') is not recognized by this path.
+    # NumPy (as of 2.5) vectorize cannot resolve bfloat16 output char ('E').
     @testing.for_all_dtypes_combination(
         names=('dtype1', 'dtype2'), bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-6)
@@ -118,7 +132,7 @@ class TestVectorizeOps(unittest.TestCase):
 
         return self.run_div(my_div, xp, [dtype1, dtype2])
 
-    # bfloat16 dtype.char ('E') is not recognized by this path.
+    # NumPy (as of 2.5) vectorize cannot resolve bfloat16 output char ('E').
     @testing.for_all_dtypes_combination(
         names=('dtype1', 'dtype2'), bfloat16=False)
     @testing.numpy_cupy_allclose(accept_error=TypeError)
@@ -128,7 +142,7 @@ class TestVectorizeOps(unittest.TestCase):
 
         return self.run_div(my_floor_div, xp, [dtype1, dtype2])
 
-    # bfloat16 dtype.char ('E') is not recognized by this path.
+    # NumPy (as of 2.5) vectorize cannot resolve bfloat16 output char ('E').
     @testing.for_all_dtypes_combination(
         names=('dtype1', 'dtype2'), bfloat16=False)
     @testing.numpy_cupy_allclose(
@@ -190,8 +204,7 @@ class TestVectorizeOps(unittest.TestCase):
 
         return self._run(my_bit_invert, xp, [numpy.int64])
 
-    # bfloat16 dtype.char ('E') is not recognized by this path.
-    @testing.for_all_dtypes(bfloat16=False)
+    @testing.for_all_dtypes()
     @testing.numpy_cupy_array_equal(accept_error=TypeError)
     def test_vectorize_logical_not(self, xp, dtype):
         def my_logical_not(x):
@@ -199,9 +212,8 @@ class TestVectorizeOps(unittest.TestCase):
 
         return self._run(my_logical_not, xp, [dtype])
 
-    # bfloat16 dtype.char ('E') is not recognized by this path.
     @testing.for_all_dtypes_combination(
-        names=('dtype1', 'dtype2'), bfloat16=False)
+        names=('dtype1', 'dtype2'))
     @testing.numpy_cupy_array_equal(accept_error=TypeError)
     def test_vectorize_eq(self, xp, dtype1, dtype2):
         def my_eq(x, y):
@@ -209,9 +221,8 @@ class TestVectorizeOps(unittest.TestCase):
 
         return self._run(my_eq, xp, [dtype1, dtype2])
 
-    # bfloat16 dtype.char ('E') is not recognized by this path.
     @testing.for_all_dtypes_combination(
-        names=('dtype1', 'dtype2'), bfloat16=False)
+        names=('dtype1', 'dtype2'))
     @testing.numpy_cupy_array_equal(accept_error=TypeError)
     def test_vectorize_neq(self, xp, dtype1, dtype2):
         def my_neq(x, y):
@@ -219,9 +230,8 @@ class TestVectorizeOps(unittest.TestCase):
 
         return self._run(my_neq, xp, [dtype1, dtype2])
 
-    # bfloat16 dtype.char ('E') is not recognized by this path.
     @testing.for_all_dtypes_combination(
-        names=('dtype1', 'dtype2'), bfloat16=False)
+        names=('dtype1', 'dtype2'))
     @testing.numpy_cupy_array_equal(accept_error=TypeError)
     def test_vectorize_lt(self, xp, dtype1, dtype2):
         def my_lt(x, y):
@@ -229,9 +239,8 @@ class TestVectorizeOps(unittest.TestCase):
 
         return self._run(my_lt, xp, [dtype1, dtype2])
 
-    # bfloat16 dtype.char ('E') is not recognized by this path.
     @testing.for_all_dtypes_combination(
-        names=('dtype1', 'dtype2'), bfloat16=False)
+        names=('dtype1', 'dtype2'))
     @testing.numpy_cupy_array_equal(accept_error=TypeError)
     def test_vectorize_le(self, xp, dtype1, dtype2):
         def my_le(x, y):
@@ -239,9 +248,8 @@ class TestVectorizeOps(unittest.TestCase):
 
         return self._run(my_le, xp, [dtype1, dtype2])
 
-    # bfloat16 dtype.char ('E') is not recognized by this path.
     @testing.for_all_dtypes_combination(
-        names=('dtype1', 'dtype2'), bfloat16=False)
+        names=('dtype1', 'dtype2'))
     @testing.numpy_cupy_array_equal(accept_error=TypeError)
     def test_vectorize_gt(self, xp, dtype1, dtype2):
         def my_gt(x, y):
@@ -249,9 +257,8 @@ class TestVectorizeOps(unittest.TestCase):
 
         return self._run(my_gt, xp, [dtype1, dtype2])
 
-    # bfloat16 dtype.char ('E') is not recognized by this path.
     @testing.for_all_dtypes_combination(
-        names=('dtype1', 'dtype2'), bfloat16=False)
+        names=('dtype1', 'dtype2'))
     @testing.numpy_cupy_array_equal(accept_error=TypeError)
     def test_vectorize_ge(self, xp, dtype1, dtype2):
         def my_ge(x, y):
@@ -271,8 +278,8 @@ class TestVectorizeOps(unittest.TestCase):
 @pytest.mark.skipif(_IS_HIP_LT7, reason="Skip on ROCm < 7 (HIP).")
 class TestVectorizeExprs(unittest.TestCase):
 
-    # bfloat16 dtype.char ('E') is unsupported by the vectorize path.
-    @testing.for_all_dtypes(name='cond_dtype', no_complex=True, bfloat16=False)
+    @testing.for_all_dtypes(name='cond_dtype', no_complex=True)
+    # NumPy (as of 2.5) vectorize cannot resolve bfloat16 output char ('E').
     @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_vectorize_ifexp(self, xp, dtype, cond_dtype):
@@ -298,7 +305,8 @@ class TestVectorizeExprs(unittest.TestCase):
         x = testing.shaped_random((20, 30), xp, dtype, seed=0)
         return f(x)
 
-    @testing.for_all_dtypes()
+    # NumPy (as of 2.5) vectorize cannot resolve bfloat16 output char ('E').
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_array_equal(accept_error=TypeError)
     def test_vectorize_ufunc_call(self, xp, dtype):
         def my_ufunc_add(x, y):
@@ -310,9 +318,9 @@ class TestVectorizeExprs(unittest.TestCase):
         return f(x, y)
 
     @testing.with_requires("numpy>=1.25")
-    # bfloat16 dtype.char ('E') is not recognized by this path.
-    @testing.for_all_dtypes_combination(
-        names=('dtype1', 'dtype2'), bfloat16=False)
+    @testing.for_all_dtypes(name='dtype1')
+    # NumPy (as of 2.5) vectorize cannot resolve bfloat16 output char ('E').
+    @testing.for_all_dtypes(name='dtype2', bfloat16=False)
     @testing.numpy_cupy_allclose(
         rtol={numpy.float16: 1e3, 'default': 1e-7}, accept_error=TypeError)
     def test_vectorize_ufunc_call_dtype(self, xp, dtype1, dtype2):
@@ -324,9 +332,9 @@ class TestVectorizeExprs(unittest.TestCase):
         y = testing.shaped_random((20, 30), xp, dtype1, seed=2)
         return f(x, y)
 
-    # bfloat16 dtype.char ('E') is unsupported by the vectorize path.
-    @testing.for_all_dtypes_combination(
-        names=('dtype1', 'dtype2'), full=True, bfloat16=False)
+    @testing.for_all_dtypes(name='dtype1')
+    # JIT does not recognize bfloat16 scalar cast constructors.
+    @testing.for_all_dtypes(name='dtype2', bfloat16=False)
     @testing.numpy_cupy_array_equal(
         accept_error=(TypeError, cupy.exceptions.ComplexWarning))
     def test_vectorize_typecast(self, xp, dtype1, dtype2):
@@ -343,7 +351,7 @@ class TestVectorizeExprs(unittest.TestCase):
 @pytest.mark.skipif(_IS_HIP_LT7, reason="Skip on ROCm < 7 (HIP).")
 class TestVectorizeInstructions(unittest.TestCase):
 
-    # bfloat16 dtype.char ('E') is unsupported by the vectorize path.
+    # NumPy (as of 2.5) vectorize cannot resolve bfloat16 output char ('E').
     @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_vectorize_assign_new(self, xp, dtype):
@@ -355,7 +363,7 @@ class TestVectorizeInstructions(unittest.TestCase):
         x = testing.shaped_random((20, 30), xp, dtype, seed=1)
         return f(x)
 
-    # bfloat16 dtype.char ('E') is unsupported by the vectorize path.
+    # NumPy (as of 2.5) vectorize cannot resolve bfloat16 output char ('E').
     @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_vectorize_assign_update(self, xp, dtype):
@@ -367,7 +375,7 @@ class TestVectorizeInstructions(unittest.TestCase):
         x = testing.shaped_random((20, 30), xp, dtype, seed=1)
         return f(x)
 
-    # bfloat16 dtype.char ('E') is unsupported by the vectorize path.
+    # NumPy (as of 2.5) vectorize cannot resolve bfloat16 output char ('E').
     @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_vectorize_augassign(self, xp, dtype):
@@ -650,7 +658,7 @@ class TestVectorizeConstants(unittest.TestCase):
 @pytest.mark.skipif(_IS_HIP_LT7, reason="Skip on ROCm < 7 (HIP).")
 class TestVectorizeBroadcast(unittest.TestCase):
 
-    # bfloat16 dtype.char ('E') is not recognized by this path.
+    # NumPy (as of 2.5) vectorize cannot resolve bfloat16 output char ('E').
     @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-5)
     def test_vectorize_broadcast(self, xp, dtype):
@@ -662,8 +670,7 @@ class TestVectorizeBroadcast(unittest.TestCase):
         x2 = testing.shaped_random((30,), xp, dtype, seed=2)
         return f(x1, x2)
 
-    # bfloat16 dtype.char ('E') is not recognized by this path.
-    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
+    @testing.for_all_dtypes(no_bool=True)
     @testing.numpy_cupy_allclose(rtol=1e-5)
     def test_vectorize_python_scalar_input(self, xp, dtype):
         def my_func(x1, x2):
@@ -674,7 +681,7 @@ class TestVectorizeBroadcast(unittest.TestCase):
         x2 = 1
         return f(x1, x2)
 
-    # bfloat16 dtype.char ('E') is not recognized by this path.
+    # NumPy (as of 2.5) vectorize cannot resolve bfloat16 output char ('E').
     @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-5)
     def test_vectorize_numpy_scalar_input(self, xp, dtype):
@@ -690,7 +697,7 @@ class TestVectorizeBroadcast(unittest.TestCase):
 @pytest.mark.skipif(_IS_HIP_LT7, reason="Skip on ROCm < 7 (HIP).")
 class TestVectorize(unittest.TestCase):
 
-    # bfloat16 dtype.char ('E') is not recognized by this path.
+    # NumPy (as of 2.5) vectorize cannot resolve bfloat16 output char ('E').
     @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(
         rtol={'default': 1e-5,

@@ -261,10 +261,6 @@ class TestJoin:
     @testing.numpy_cupy_array_equal(
         accept_error=(TypeError, cupy.exceptions.ComplexWarning))
     def test_concatenate_casting(self, xp, dtype1, dtype2, casting):
-        # Complex-to-bfloat16 casts disagree on ComplexWarning emission.
-        if (casting == 'unsafe' and numpy.dtype(dtype1).kind == 'c'
-                and numpy.dtype(dtype2).name == 'bfloat16'):
-            pytest.skip('complex-to-bfloat16 casting warnings differ')
         a = testing.shaped_arange((3, 4), xp, dtype1)
         b = testing.shaped_arange((3, 4), xp, dtype1)
         # may raise TypeError or ComplexWarning
@@ -333,10 +329,6 @@ class TestJoin:
     @testing.numpy_cupy_array_equal(
         accept_error=(TypeError, cupy.exceptions.ComplexWarning))
     def test_hstack_casting(self, xp, dtype1, dtype2, casting):
-        # Complex-to-bfloat16 casts disagree on ComplexWarning emission.
-        if (casting == 'unsafe' and numpy.dtype(dtype1).kind == 'c'
-                and numpy.dtype(dtype2).name == 'bfloat16'):
-            pytest.skip('complex-to-bfloat16 casting warnings differ')
         a = testing.shaped_arange((3, 4), xp, dtype1)
         b = testing.shaped_arange((3, 4), xp, dtype1)
         # may raise TypeError or ComplexWarning
@@ -380,10 +372,6 @@ class TestJoin:
     @testing.numpy_cupy_array_equal(
         accept_error=(TypeError, cupy.exceptions.ComplexWarning))
     def test_vstack_casting(self, xp, dtype1, dtype2, casting):
-        # Complex-to-bfloat16 casts disagree on ComplexWarning emission.
-        if (casting == 'unsafe' and numpy.dtype(dtype1).kind == 'c'
-                and numpy.dtype(dtype2).name == 'bfloat16'):
-            pytest.skip('complex-to-bfloat16 casting warnings differ')
         a = testing.shaped_arange((3, 4), xp, dtype1)
         b = testing.shaped_arange((3, 4), xp, dtype1)
         # may raise TypeError or ComplexWarning
@@ -528,10 +516,6 @@ class TestJoin:
     @testing.numpy_cupy_array_equal(
         accept_error=(TypeError, cupy.exceptions.ComplexWarning))
     def test_stack_casting(self, xp, dtype1, dtype2, casting):
-        # Complex-to-bfloat16 casts disagree on ComplexWarning emission.
-        if (casting == 'unsafe' and numpy.dtype(dtype1).kind == 'c'
-                and numpy.dtype(dtype2).name == 'bfloat16'):
-            pytest.skip('complex-to-bfloat16 casting warnings differ')
         a = testing.shaped_arange((3, 4), xp, dtype1)
         b = testing.shaped_arange((3, 4), xp, dtype1)
         # may raise TypeError or ComplexWarning

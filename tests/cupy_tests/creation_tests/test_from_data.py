@@ -221,8 +221,8 @@ class TestFromData(unittest.TestCase):
         return xp.array(a, dtype=dtype2, order=order)
 
     @testing.for_orders('CFAK')
-    # bfloat16 dtype.char ('E') is not recognized by this path.
-    @testing.for_all_dtypes(name='dtype1', no_complex=True, bfloat16=False)
+    @testing.for_all_dtypes(name='dtype1', no_complex=True)
+    # NumPy cannot resolve bfloat16 from a dtype character.
     @testing.for_all_dtypes(name='dtype2', bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_array_copy_with_dtype_char(self, xp, dtype1, dtype2, order):
@@ -252,8 +252,8 @@ class TestFromData(unittest.TestCase):
 
     @testing.for_orders('CFAK', name='src_order')
     @testing.for_orders('CFAK', name='dst_order')
-    # bfloat16 dtype.char ('E') is not recognized by this path.
-    @testing.for_all_dtypes(name='dtype1', no_complex=True, bfloat16=False)
+    @testing.for_all_dtypes(name='dtype1', no_complex=True)
+    # NumPy cannot resolve bfloat16 from a dtype character.
     @testing.for_all_dtypes(name='dtype2', bfloat16=False)
     @testing.numpy_cupy_array_equal(strides_check=True)
     def test_array_copy_list_of_numpy_with_dtype_char(self, xp, dtype1,
@@ -282,8 +282,8 @@ class TestFromData(unittest.TestCase):
 
     @testing.for_orders('CFAK', name='src_order')
     @testing.for_orders('CFAK', name='dst_order')
-    # bfloat16 dtype.char ('E') is not recognized by this path.
-    @testing.for_all_dtypes(name='dtype1', no_complex=True, bfloat16=False)
+    @testing.for_all_dtypes(name='dtype1', no_complex=True)
+    # NumPy cannot resolve bfloat16 from a dtype character.
     @testing.for_all_dtypes(name='dtype2', bfloat16=False)
     @testing.numpy_cupy_array_equal(strides_check=True)
     def test_array_copy_list_of_cupy_with_dtype_char(self, xp, dtype1, dtype2,

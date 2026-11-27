@@ -7,9 +7,9 @@ from cupy import _core
 
 def _get_input_type(arg):
     if hasattr(arg, 'dtype'):
-        return arg.dtype.char
+        return arg.dtype
     else:
-        return numpy.dtype(type(arg)).char
+        return numpy.dtype(type(arg))
 
 
 class vectorize:
@@ -75,7 +75,7 @@ class vectorize:
     def __call__(self, *args):
         from cupyx.jit import _interface
         from cupyx.jit import _cuda_types
-        itypes = ''.join([_get_input_type(x) for x in args])
+        itypes = tuple(_get_input_type(x) for x in args)
         kern = self._kernel_cache.get(itypes, None)
 
         if kern is None:

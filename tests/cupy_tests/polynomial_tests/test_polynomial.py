@@ -64,9 +64,8 @@ class TestPolynomial(unittest.TestCase):
         a = testing.shaped_random((3, 2, 1), xp, dtype)
         return xp.polynomial.polynomial.polyvander(a, 2)
 
-    # TODO: Revisit bfloat16 tolerances for rounding differences.
-    @testing.for_all_dtypes(bfloat16=False)
-    @testing.numpy_cupy_allclose(rtol=1e-5)
+    @testing.for_all_dtypes()
+    @testing.numpy_cupy_allclose(rtol={numpy.float16: 1e-5}, rtol_eps=8)
     def test_polyvander_zero_dim(self, xp, dtype):
         a = testing.shaped_random((), xp, dtype)
         return xp.polynomial.polynomial.polyvander(a, 5)

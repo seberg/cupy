@@ -238,9 +238,8 @@ class TestPoly1d:
         a = testing.shaped_arange((5,), xp, dtype)
         return str(xp.poly1d(a))
 
-    # TODO: Revisit bfloat16 tolerances for evaluation rounding.
-    @testing.for_all_dtypes(bfloat16=False)
-    @testing.numpy_cupy_allclose(rtol={numpy.float16: 1e-2, 'default': 1e-6})
+    @testing.for_all_dtypes()
+    @testing.numpy_cupy_allclose(rtol_eps=8)
     def test_poly1d_call(self, xp, dtype):
         a = testing.shaped_arange((5,), xp, dtype)
         b = xp.poly1d(a)
@@ -738,9 +737,8 @@ class TestPolyvalInvalidTypes(Poly1dTestBase):
 }))
 class TestPolyvalShapeCombination:
 
-    # TODO: Revisit bfloat16 tolerances for evaluation rounding.
-    @testing.for_all_dtypes(bfloat16=False)
-    @testing.numpy_cupy_allclose(rtol={numpy.float16: 1e-2, 'default': 1e-6})
+    @testing.for_all_dtypes()
+    @testing.numpy_cupy_allclose(rtol_eps=8)
     def test_polyval(self, xp, dtype):
         a = testing.shaped_arange(self.shape1, xp, dtype)
         b = testing.shaped_arange(self.shape2, xp, dtype)
@@ -763,20 +761,18 @@ class TestPolyvalInvalidShapeCombination:
 
 class TestPolyvalDtypesCombination:
 
-    # TODO: Revisit bfloat16 tolerances for evaluation rounding.
     @testing.for_all_dtypes_combination(
-        names=['dtype1', 'dtype2'], full=True, bfloat16=False)
-    @testing.numpy_cupy_allclose(rtol={numpy.float16: 1e-2, 'default': 1e-6})
+        names=['dtype1', 'dtype2'], full=True)
+    @testing.numpy_cupy_allclose(rtol_eps=8)
     def test_polyval_diff_types_array_array(self, xp, dtype1, dtype2):
         a = testing.shaped_arange((10,), xp, dtype1)
         b = testing.shaped_arange((3,), xp, dtype2)
         return xp.polyval(a, b)
 
     @testing.with_requires('numpy>=1.25')
-    # TODO: Revisit bfloat16 tolerances for evaluation rounding.
     @testing.for_all_dtypes_combination(
-        names=['dtype1', 'dtype2'], full=True, bfloat16=False)
-    @testing.numpy_cupy_allclose(rtol=1e-6)
+        names=['dtype1', 'dtype2'], full=True)
+    @testing.numpy_cupy_allclose(rtol={numpy.float16: 1e-6}, rtol_eps=8)
     def test_polyval_diff_types_array_scalar(self, xp, dtype1, dtype2):
         a = testing.shaped_arange((10,), xp, dtype1)
         b = dtype2(3)

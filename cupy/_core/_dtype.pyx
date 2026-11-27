@@ -171,7 +171,8 @@ cpdef void _raise_if_invalid_cast(
         # same-kind is the most common casting used and for NumPy dtypes.
         return
     if _numpy_can_cast(from_dt, to_dt, casting):
-        if casting == "unsafe" and from_dt.kind == "c" and to_dt.kind in "iuf":
+        if (casting == "unsafe" and from_dt.kind == "c"
+                and (to_dt.kind in "iuf" or to_dt.name == "bfloat16")):
             # Complex warning, we are dropping the imagine part:
             warnings.warn(
                 'Casting complex values to real discards the imaginary part',

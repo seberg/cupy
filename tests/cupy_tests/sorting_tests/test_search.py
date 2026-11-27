@@ -319,9 +319,8 @@ class TestArgMinMaxDtype:
 )
 class TestWhereTwoArrays:
 
-    # bfloat16 result dtype differs: CuPy float32, reference bfloat16.
     @testing.for_all_dtypes_combination(
-        names=['cond_type', 'x_type', 'y_type'], bfloat16=False)
+        names=['cond_type', 'x_type', 'y_type'])
     @testing.numpy_cupy_allclose()
     def test_where_two_arrays(self, xp, cond_type, x_type, y_type):
         m = testing.shaped_random(self.cond_shape, xp, xp.bool_)
@@ -341,8 +340,7 @@ class TestWhereTwoArrays:
 )
 class TestWhereArrayAndScalar:
 
-    # bfloat16 result dtype differs: CuPy float32, reference bfloat16.
-    @testing.for_all_dtypes(bfloat16=False)
+    @testing.for_all_dtypes()
     @testing.numpy_cupy_allclose()
     def test_where_array_scalar(self, xp, dtype):
         cond = testing.shaped_random((2, 3, 4), xp, xp.bool_)
@@ -350,8 +348,7 @@ class TestWhereArrayAndScalar:
         y = self.scalar_value
         return xp.where(cond, x, y)
 
-    # bfloat16 result dtype differs: CuPy float32, reference bfloat16.
-    @testing.for_all_dtypes(bfloat16=False)
+    @testing.for_all_dtypes()
     @testing.numpy_cupy_allclose()
     def test_where_scalar_array(self, xp, dtype):
         cond = testing.shaped_random((2, 3, 4), xp, xp.bool_)

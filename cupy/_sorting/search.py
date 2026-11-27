@@ -167,7 +167,8 @@ def flatnonzero(a):
 _where_ufunc = _core.create_ufunc(
     'cupy_where',
     ('???->?', '?bb->b', '?BB->B', '?hh->h', '?HH->H', '?ii->i', '?II->I',
-     '?ll->l', '?LL->L', '?qq->q', '?QQ->Q', '?ee->e', '?ff->f',
+     '?ll->l', '?LL->L', '?qq->q', '?QQ->Q', '?ee->e',
+     *_util.bf16_loop(('?', None, None)), '?ff->f',
      '?dd->d', '?FF->F', '?DD->D'),
     'out0 = in0 ? in1 : in2')
 

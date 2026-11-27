@@ -4,17 +4,17 @@ import pytest
 
 import cupy
 from cupy import cuda
+from cupy._util import BF16
 from cupy._core._routines_math import _scan_for_test as scan
 from cupy import testing
 
 
 class TestScan:
 
-    # TODO: Check whether bfloat16 scan rounding needs a tolerance.
-    @testing.for_all_dtypes(bfloat16=False)
+    @testing.for_all_dtypes()
     def test_scan(self, dtype):
         element_num = 10000
-        if dtype in {cupy.int8, cupy.uint8, cupy.float16}:
+        if dtype in {cupy.int8, cupy.uint8, cupy.float16, BF16}:
             element_num = 100
 
         a = cupy.ones((element_num,), dtype=dtype)
@@ -37,11 +37,10 @@ class TestScan:
             a = cupy.zeros((10,))
             scan(a)
 
-    # TODO: Check whether bfloat16 scan rounding needs a tolerance.
-    @testing.for_all_dtypes(bfloat16=False)
+    @testing.for_all_dtypes()
     def test_scan_out(self, dtype):
         element_num = 10000
-        if dtype in {cupy.int8, cupy.uint8, cupy.float16}:
+        if dtype in {cupy.int8, cupy.uint8, cupy.float16, BF16}:
             element_num = 100
 
         a = cupy.ones((element_num,), dtype=dtype)

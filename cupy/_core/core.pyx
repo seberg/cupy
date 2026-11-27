@@ -2807,6 +2807,7 @@ _round_ufunc = create_ufunc(
      'bq->b', 'Bq->B', 'hq->h', 'Hq->H', 'iq->i', 'Iq->I', 'lq->l', 'Lq->L',
      'qq->q', 'Qq->Q',
      ('eq->e', _round_float),
+     *_util.bf16_loop((None, numpy.longlong), code=_round_float),
      ('fq->f', _round_float),
      ('dq->d', _round_float),
      ('Fq->F', _round_complex),

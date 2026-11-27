@@ -14,9 +14,6 @@ class TestRounding(unittest.TestCase):
     @testing.for_all_dtypes(no_complex=True)
     @testing.numpy_cupy_allclose(atol=1e-5)
     def check_unary(self, name, xp, dtype):
-        if (numpy.dtype(dtype).name == 'bfloat16'
-                and name in ('around', 'round')):
-            pytest.skip('bfloat16 round returns float32 in CuPy')
         a = testing.shaped_arange((2, 3), xp, dtype)
         return getattr(xp, name)(a)
 
@@ -91,7 +88,7 @@ class TestRound(unittest.TestCase):
 
     shape = (20,)
 
-    # bfloat16 result dtype differs: CuPy float32, reference bfloat16.
+    # NumPy rounds bfloat16 intermediates differently for nonzero decimals.
     @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(atol=1e-5)
     def test_round(self, xp, dtype):

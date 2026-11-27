@@ -169,8 +169,7 @@ class TestTriLargeDimensions(unittest.TestCase):
 )
 class TestTriLowerAndUpper(unittest.TestCase):
 
-    # bfloat16 result dtype differs: CuPy float32, reference bfloat16.
-    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
+    @testing.for_all_dtypes(no_complex=True)
     @testing.numpy_cupy_array_equal()
     def test_tril(self, xp, dtype):
         m = testing.shaped_arange(self.shape, xp, dtype)
@@ -180,22 +179,19 @@ class TestTriLowerAndUpper(unittest.TestCase):
     def test_tril_array_like(self, xp):
         return xp.tril([[1, 2], [3, 4]])
 
-    # bfloat16 result dtype differs: CuPy float32, reference bfloat16.
-    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
+    @testing.for_all_dtypes(no_complex=True)
     @testing.numpy_cupy_array_equal()
     def test_tril_nega(self, xp, dtype):
         m = testing.shaped_arange(self.shape, xp, dtype)
         return xp.tril(m, -1)
 
-    # bfloat16 result dtype differs: CuPy float32, reference bfloat16.
-    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
+    @testing.for_all_dtypes(no_complex=True)
     @testing.numpy_cupy_array_equal()
     def test_tril_posi(self, xp, dtype):
         m = testing.shaped_arange(self.shape, xp, dtype)
         return xp.tril(m, 1)
 
-    # bfloat16 result dtype differs: CuPy float32, reference bfloat16.
-    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
+    @testing.for_all_dtypes(no_complex=True)
     @testing.numpy_cupy_array_equal()
     def test_triu(self, xp, dtype):
         m = testing.shaped_arange(self.shape, xp, dtype)
@@ -205,15 +201,13 @@ class TestTriLowerAndUpper(unittest.TestCase):
     def test_triu_array_like(self, xp):
         return xp.triu([[1, 2], [3, 4]])
 
-    # bfloat16 result dtype differs: CuPy float32, reference bfloat16.
-    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
+    @testing.for_all_dtypes(no_complex=True)
     @testing.numpy_cupy_array_equal()
     def test_triu_nega(self, xp, dtype):
         m = testing.shaped_arange(self.shape, xp, dtype)
         return xp.triu(m, -1)
 
-    # bfloat16 result dtype differs: CuPy float32, reference bfloat16.
-    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
+    @testing.for_all_dtypes(no_complex=True)
     @testing.numpy_cupy_array_equal()
     def test_triu_posi(self, xp, dtype):
         m = testing.shaped_arange(self.shape, xp, dtype)
