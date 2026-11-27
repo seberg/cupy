@@ -198,7 +198,8 @@ def make_kernel_module(layout, index_type):
 class TestMdspan0D:
     """Test mdspan with 0D arrays (scalars)."""
 
-    @testing.for_all_dtypes()
+    # The test kernels do not instantiate bfloat16 entry points.
+    @testing.for_all_dtypes(bfloat16=False)
     def test_mdspan_0d(self, dtype, make_kernel_module):
         mod, layout, index_type = make_kernel_module(0)
 
@@ -216,7 +217,8 @@ class TestMdspan0D:
         ker((1,), (1,), (a_mdspan, out_mdspan))
         testing.assert_array_equal(out, a + dtype(1))
 
-    @testing.for_all_dtypes()
+    # The test kernels do not instantiate bfloat16 entry points.
+    @testing.for_all_dtypes(bfloat16=False)
     def test_mdspan_0d_scalar_from_slice(self, dtype, make_kernel_module):
         mod, layout, index_type = make_kernel_module(0)
 
@@ -243,7 +245,8 @@ class TestMdspan0D:
 class TestMdspan1D:
     """Test mdspan with 1D arrays."""
 
-    @testing.for_all_dtypes()
+    # The test kernels do not instantiate bfloat16 entry points.
+    @testing.for_all_dtypes(bfloat16=False)
     def test_mdspan_1d(self, dtype, make_kernel_module):
         mod, layout, index_type = make_kernel_module(1)
 
@@ -261,7 +264,8 @@ class TestMdspan1D:
         ker((1,), (100,), (a_mdspan, out_mdspan))
         testing.assert_array_equal(out, a + cupy.ones(100, dtype=dtype))
 
-    @testing.for_all_dtypes()
+    # The test kernels do not instantiate bfloat16 entry points.
+    @testing.for_all_dtypes(bfloat16=False)
     def test_mdspan_1d_sliced(self, dtype, make_kernel_module):
         mod, layout, index_type = make_kernel_module(1)
         if layout != 'layout_stride':
@@ -285,7 +289,8 @@ class TestMdspan1D:
             out_sliced, a_sliced + cupy.ones_like(a_sliced, dtype=dtype)
         )
 
-    @testing.for_all_dtypes()
+    # The test kernels do not instantiate bfloat16 entry points.
+    @testing.for_all_dtypes(bfloat16=False)
     def test_mdspan_negative_stride_1d(self, dtype, make_kernel_module):
         mod, layout, index_type = make_kernel_module(1)
         if layout != 'layout_stride':
@@ -321,7 +326,7 @@ class TestMdspan2D:
 
     # TODO(leofang): it does not seem 'AK' makes any difference here?
     @testing.for_orders('CF')
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     def test_mdspan_2d(self, dtype, order, make_kernel_module):
         mod, layout, index_type = make_kernel_module(2)
         shape = (4, 8)
@@ -342,7 +347,7 @@ class TestMdspan2D:
 
     # TODO(leofang): it does not seem 'AK' makes any difference here?
     @testing.for_orders('CFAK')
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     def test_mdspan_2d_sliced(self, dtype, order, make_kernel_module):
         mod, layout, index_type = make_kernel_module(2)
         if layout != 'layout_stride':
@@ -367,7 +372,8 @@ class TestMdspan2D:
             out_sliced, a_sliced + cupy.ones_like(a_sliced, dtype=dtype)
         )
 
-    @testing.for_all_dtypes()
+    # The test kernels do not instantiate bfloat16 entry points.
+    @testing.for_all_dtypes(bfloat16=False)
     def test_mdspan_negative_stride_2d(self, dtype, make_kernel_module):
         mod, layout, index_type = make_kernel_module(2)
         if layout != 'layout_stride':
@@ -403,7 +409,8 @@ class TestMdspan3D:
     """Test mdspan with 3D arrays."""
 
     @testing.for_orders('CFAK')
-    @testing.for_all_dtypes()
+    # The test kernels do not instantiate bfloat16 entry points.
+    @testing.for_all_dtypes(bfloat16=False)
     def test_mdspan_3d(self, dtype, order, make_kernel_module):
         mod, layout, index_type = make_kernel_module(3)
 
@@ -423,7 +430,8 @@ class TestMdspan3D:
         testing.assert_array_equal(out, a + cupy.ones(shape, dtype=dtype))
 
     @testing.for_orders('CFAK')
-    @testing.for_all_dtypes()
+    # The test kernels do not instantiate bfloat16 entry points.
+    @testing.for_all_dtypes(bfloat16=False)
     def test_mdspan_3d_sliced(self, dtype, order, make_kernel_module):
         mod, layout, index_type = make_kernel_module(3)
         if layout != 'layout_stride':
@@ -474,7 +482,8 @@ class TestMdspanValidation:
             name_expressions=name_expressions
         )
 
-    @testing.for_all_dtypes()
+    # The test kernels do not instantiate bfloat16 entry points.
+    @testing.for_all_dtypes(bfloat16=False)
     def test_mdspan_size_validation(self, dtype, index_type):
         """Test that mdspan size matches expected layout."""
         shape = (4, 8)
@@ -501,7 +510,8 @@ class TestMdspanValidation:
 class TestMdspanBroadcast:
     """Test mdspan with broadcasted arrays (zero strides)."""
 
-    @testing.for_all_dtypes()
+    # The test kernels do not instantiate bfloat16 entry points.
+    @testing.for_all_dtypes(bfloat16=False)
     def test_mdspan_broadcast_1d_zero_stride(self, dtype, make_kernel_module):
         mod, layout, index_type = make_kernel_module(1)
         if layout != 'layout_stride':
@@ -531,7 +541,8 @@ class TestMdspanBroadcast:
         expected = cupy.full(shape, a[0] + dtype(1), dtype=dtype)
         testing.assert_array_equal(out, expected)
 
-    @testing.for_all_dtypes()
+    # The test kernels do not instantiate bfloat16 entry points.
+    @testing.for_all_dtypes(bfloat16=False)
     def test_mdspan_broadcast_2d_zero_stride_axis0(
             self, dtype, make_kernel_module):
         mod, layout, index_type = make_kernel_module(2)
@@ -561,7 +572,8 @@ class TestMdspanBroadcast:
         expected = a_broadcast + cupy.ones(shape, dtype=dtype)
         testing.assert_array_equal(out, expected)
 
-    @testing.for_all_dtypes()
+    # The test kernels do not instantiate bfloat16 entry points.
+    @testing.for_all_dtypes(bfloat16=False)
     def test_mdspan_broadcast_2d_zero_stride_axis1(
             self, dtype, make_kernel_module):
         mod, layout, index_type = make_kernel_module(2)
@@ -590,7 +602,8 @@ class TestMdspanBroadcast:
         expected = a_broadcast + cupy.ones(shape, dtype=dtype)
         testing.assert_array_equal(out, expected)
 
-    @testing.for_all_dtypes()
+    # The test kernels do not instantiate bfloat16 entry points.
+    @testing.for_all_dtypes(bfloat16=False)
     def test_mdspan_broadcast_2d_both_axes(
             self, dtype, make_kernel_module):
         mod, layout, index_type = make_kernel_module(2)

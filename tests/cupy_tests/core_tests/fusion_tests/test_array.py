@@ -278,7 +278,8 @@ class TestFusionArrayMethods:
     def test_copy(self, xp, dtype):
         return lambda x: x.copy()
 
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for fused reduction rounding.
+    @testing.for_all_dtypes(bfloat16=False)
     @fusion_utils.check_fusion()
     def test_sum(self, xp, dtype):
         return lambda x: x.sum()
@@ -316,8 +317,8 @@ class TestFusionArrayAsType:
         return (x,), {}
 
     # TODO(asi1024): Raise complex warnings.
-    @testing.for_all_dtypes(name='dtype1', no_complex=True)
-    @testing.for_all_dtypes(name='dtype2')
+    @testing.for_all_dtypes(name='dtype1', no_complex=True, bfloat16=False)
+    @testing.for_all_dtypes(name='dtype2', bfloat16=False)
     @fusion_utils.check_fusion()
     def test_astype(self, xp, dtype1, dtype2):
         return lambda x: x.astype(dtype2)

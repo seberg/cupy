@@ -45,7 +45,9 @@ class TestArrayUfunc(unittest.TestCase):
         elif self.stream == 'new':
             self.stream = cupy.cuda.Stream()
 
-    @testing.for_all_dtypes_combination(names=['x_type', 'y_type'])
+    # CUDA array interface loses the bfloat16 dtype description.
+    @testing.for_all_dtypes_combination(
+        names=['x_type', 'y_type'], bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-6, accept_error=TypeError,
                                  contiguous_check=False)
     def check_array_scalar_op(self, op, xp, x_type, y_type, trans=False):
@@ -79,7 +81,8 @@ class TestElementwiseKernel(unittest.TestCase):
         elif self.stream == 'new':
             self.stream = cupy.cuda.Stream()
 
-    @testing.for_all_dtypes_combination()
+    # The generated test kernel does not compile for bfloat16.
+    @testing.for_all_dtypes_combination(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-6, accept_error=TypeError,
                                  contiguous_check=False)
     def check_array_scalar_op(self, op, xp, dtyes, trans=False):

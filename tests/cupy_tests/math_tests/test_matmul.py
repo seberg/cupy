@@ -60,16 +60,16 @@ from cupy import testing
     }))
 class TestMatmul(unittest.TestCase):
 
-    @testing.for_all_dtypes(name='dtype1')
-    @testing.for_all_dtypes(name='dtype2')
+    @testing.for_all_dtypes(name='dtype1', bfloat16=False)
+    @testing.for_all_dtypes(name='dtype2', bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-3)  # required for uint8
     def test_operator_matmul(self, xp, dtype1, dtype2):
         x1 = testing.shaped_arange(self.shape_pair[0], xp, dtype1)
         x2 = testing.shaped_arange(self.shape_pair[1], xp, dtype2)
         return operator.matmul(x1, x2)
 
-    @testing.for_all_dtypes(name='dtype1')
-    @testing.for_all_dtypes(name='dtype2')
+    @testing.for_all_dtypes(name='dtype1', bfloat16=False)
+    @testing.for_all_dtypes(name='dtype2', bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-3)  # required for uint8
     def test_cupy_matmul(self, xp, dtype1, dtype2):
         x1 = testing.shaped_arange(self.shape_pair[0], xp, dtype1)
@@ -134,7 +134,8 @@ class TestMatmulOutOverlap:
 
 class TestMatmulStrides:
 
-    @testing.for_all_dtypes()
+    # bfloat16 result dtype differs: CuPy bfloat16, reference float32.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-3)  # required for uint8
     def test_relaxed_c_contiguous_input(self, xp, dtype):
         x1 = testing.shaped_arange((2, 2, 3), xp, dtype)[:, None, :, :]
@@ -172,8 +173,8 @@ class TestMatmulLarge(unittest.TestCase):
         (numpy.uint16, numpy.uint16),
     }
 
-    @testing.for_all_dtypes(name='dtype1')
-    @testing.for_all_dtypes(name='dtype2')
+    @testing.for_all_dtypes(name='dtype1', bfloat16=False)
+    @testing.for_all_dtypes(name='dtype2', bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-3)  # required for uint8
     def test_operator_matmul(self, xp, dtype1, dtype2):
         if ((dtype1, dtype2) in self.skip_dtypes or
@@ -183,8 +184,8 @@ class TestMatmulLarge(unittest.TestCase):
         x2 = testing.shaped_random(self.shape_pair[1], xp, dtype2)
         return operator.matmul(x1, x2)
 
-    @testing.for_all_dtypes(name='dtype1')
-    @testing.for_all_dtypes(name='dtype2')
+    @testing.for_all_dtypes(name='dtype1', bfloat16=False)
+    @testing.for_all_dtypes(name='dtype2', bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-3)  # required for uint8
     def test_cupy_matmul(self, xp, dtype1, dtype2):
         if ((dtype1, dtype2) in self.skip_dtypes or

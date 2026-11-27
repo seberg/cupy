@@ -126,7 +126,7 @@ class TestNanMedian:
             a = testing.shaped_random(self.shape, numpy, dtype=dtype)
         return a
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)  # As of NumPy 2.5 MA path fails
     @testing.numpy_cupy_allclose()
     def test_nanmedian(self, xp, dtype):
         a = xp.array(self._make_array(dtype))
@@ -170,8 +170,9 @@ class TestAverage:
             w = None
         return xp.average(a, axis=axis, weights=w, returned=True)
 
-    @testing.for_all_dtypes()
-    @testing.numpy_cupy_allclose(rtol={numpy.float16: 1e-2, 'default': 5e-7})
+    @testing.for_all_dtypes(bfloat16=True)
+    @testing.numpy_cupy_allclose(
+        rtol={numpy.float16: 1e-2, "bfloat16": 1e-2, 'default': 5e-7})
     @pytest.mark.parametrize('returned', [True, False])
     @testing.with_requires('numpy>=1.23.1')
     def test_average_keepdims_axis1(self, xp, dtype, returned):
@@ -180,8 +181,9 @@ class TestAverage:
         return xp.average(
             a, axis=1, weights=w, returned=returned, keepdims=True)
 
-    @testing.for_all_dtypes()
-    @testing.numpy_cupy_allclose(rtol={'default': 1e-7, numpy.float16: 1e-3})
+    @testing.for_all_dtypes(bfloat16=True)
+    @testing.numpy_cupy_allclose(
+        rtol={'default': 1e-7, numpy.float16: 1e-3, "bfloat16": 1e-2})
     @pytest.mark.parametrize('returned', [True, False])
     @testing.with_requires('numpy>=1.23.1')
     def test_average_keepdims_noaxis(self, xp, dtype, returned):

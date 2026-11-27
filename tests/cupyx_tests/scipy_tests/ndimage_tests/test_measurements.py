@@ -169,7 +169,8 @@ class TestStats:
             result = xp.asarray(result)
         return result
 
-    @testing.for_all_dtypes(no_complex=True)
+    # TODO: Revisit bfloat16 tolerances for labeled reduction rounding.
+    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
     @testing.numpy_cupy_allclose(scipy_name='scp')
     def test_broadcast_labels(self, xp, scp, dtype):
         # 1d label will be broadcast to 2d
@@ -181,7 +182,8 @@ class TestStats:
             result = op(image, labels)
         return result
 
-    @testing.for_all_dtypes(no_complex=True)
+    # TODO: Revisit bfloat16 tolerances for labeled reduction rounding.
+    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
     @testing.numpy_cupy_allclose(scipy_name='scp')
     def test_broadcast_labels2(self, xp, scp, dtype):
         # 1d label will be broadcast to 2d
@@ -213,7 +215,8 @@ class TestStats:
             result = op(image, labels, index)
         return result
 
-    @testing.for_all_dtypes(no_complex=True)
+    # TODO: Revisit bfloat16 tolerances for labeled reduction rounding.
+    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
     @testing.numpy_cupy_allclose(scipy_name='scp')
     def test_only_input(self, xp, scp, dtype):
         image = self._make_image((100,), xp, dtype)
@@ -223,7 +226,8 @@ class TestStats:
             result = op(image)
         return result
 
-    @testing.for_all_dtypes(no_complex=True)
+    # TODO: Revisit bfloat16 tolerances for labeled reduction rounding.
+    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
     @testing.numpy_cupy_allclose(scipy_name='scp')
     def test_no_index(self, xp, scp, dtype):
         image = self._make_image((100,), xp, dtype)
@@ -234,7 +238,8 @@ class TestStats:
             result = op(image, labels)
         return result
 
-    @testing.for_all_dtypes(no_complex=True)
+    # TODO: Revisit bfloat16 tolerances for labeled reduction rounding.
+    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
     @testing.numpy_cupy_allclose(scipy_name='scp')
     def test_scalar_index(self, xp, scp, dtype):
         image = self._make_image((100,), xp, dtype)

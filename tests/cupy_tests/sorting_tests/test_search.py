@@ -319,8 +319,9 @@ class TestArgMinMaxDtype:
 )
 class TestWhereTwoArrays:
 
+    # bfloat16 result dtype differs: CuPy float32, reference bfloat16.
     @testing.for_all_dtypes_combination(
-        names=['cond_type', 'x_type', 'y_type'])
+        names=['cond_type', 'x_type', 'y_type'], bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_where_two_arrays(self, xp, cond_type, x_type, y_type):
         m = testing.shaped_random(self.cond_shape, xp, xp.bool_)
@@ -340,7 +341,8 @@ class TestWhereTwoArrays:
 )
 class TestWhereArrayAndScalar:
 
-    @testing.for_all_dtypes()
+    # bfloat16 result dtype differs: CuPy float32, reference bfloat16.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_where_array_scalar(self, xp, dtype):
         cond = testing.shaped_random((2, 3, 4), xp, xp.bool_)
@@ -348,7 +350,8 @@ class TestWhereArrayAndScalar:
         y = self.scalar_value
         return xp.where(cond, x, y)
 
-    @testing.for_all_dtypes()
+    # bfloat16 result dtype differs: CuPy float32, reference bfloat16.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_where_scalar_array(self, xp, dtype):
         cond = testing.shaped_random((2, 3, 4), xp, xp.bool_)
@@ -479,32 +482,37 @@ class TestNanArgMin:
         a = testing.shaped_random((2, 3), xp, dtype)
         return xp.nanargmin(a)
 
-    @testing.for_float_dtypes()
+    # NumPy and CuPy disagree on bfloat16 NaN argument indices.
+    @testing.for_float_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_nanargmin_nan(self, xp, dtype):
         a = xp.array([float('nan'), -1, 1], dtype)
         return xp.nanargmin(a)
 
-    @testing.for_float_dtypes()
+    # NumPy and CuPy disagree on bfloat16 NaN argument indices.
+    @testing.for_float_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_nanargmin_nan2(self, xp, dtype):
         a = xp.array([float('nan'), float('nan'), -1, 1], dtype)
         return xp.nanargmin(a)
 
-    @testing.for_float_dtypes()
+    # NumPy and CuPy disagree on bfloat16 NaN argument indices.
+    @testing.for_float_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_nanargmin_nan3(self, xp, dtype):
         a = xp.array([float('nan'), float('nan'), -1, 1, 1.0, -2.0], dtype)
         return xp.nanargmin(a)
 
-    @testing.for_float_dtypes()
+    # NumPy and CuPy disagree on bfloat16 NaN argument indices.
+    @testing.for_float_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_nanargmin_nan4(self, xp, dtype):
         a = xp.array([-1, 1, 1.0, -2.0, float('nan'), float('nan')],
                      dtype)
         return xp.nanargmin(a)
 
-    @testing.for_float_dtypes()
+    # NumPy and CuPy disagree on bfloat16 NaN argument indices.
+    @testing.for_float_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_nanargmin_nan5(self, xp, dtype):
         a = xp.array([-1, 1, 1.0, -2.0, float('nan'), float('nan'), -1, 1],
@@ -586,32 +594,37 @@ class TestNanArgMax:
         a = testing.shaped_random((2, 3), xp, dtype)
         return xp.nanargmax(a)
 
-    @testing.for_float_dtypes()
+    # NumPy and CuPy disagree on bfloat16 NaN argument indices.
+    @testing.for_float_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_nanargmax_nan(self, xp, dtype):
         a = xp.array([float('nan'), -1, 1], dtype)
         return xp.nanargmax(a)
 
-    @testing.for_float_dtypes()
+    # NumPy and CuPy disagree on bfloat16 NaN argument indices.
+    @testing.for_float_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_nanargmax_nan2(self, xp, dtype):
         a = xp.array([float('nan'), float('nan'), -1, 1], dtype)
         return xp.nanargmax(a)
 
-    @testing.for_float_dtypes()
+    # NumPy and CuPy disagree on bfloat16 NaN argument indices.
+    @testing.for_float_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_nanargmax_nan3(self, xp, dtype):
         a = xp.array([float('nan'), float('nan'), -1, 1, 1.0, -2.0], dtype)
         return xp.nanargmax(a)
 
-    @testing.for_float_dtypes()
+    # NumPy and CuPy disagree on bfloat16 NaN argument indices.
+    @testing.for_float_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_nanargmax_nan4(self, xp, dtype):
         a = xp.array([-1, 1, 1.0, -2.0, float('nan'), float('nan')],
                      dtype)
         return xp.nanargmax(a)
 
-    @testing.for_float_dtypes()
+    # NumPy and CuPy disagree on bfloat16 NaN argument indices.
+    @testing.for_float_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_nanargmax_nan5(self, xp, dtype):
         a = xp.array([-1, 1, 1.0, -2.0, float('nan'), float('nan'), -1, 1],

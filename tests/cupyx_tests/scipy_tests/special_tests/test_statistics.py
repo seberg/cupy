@@ -263,6 +263,9 @@ class TestThreeArgumentDistributions(_TestDistributionsBase):
     @testing.with_requires('scipy')
     @pytest.mark.skipif(cupy.cuda.runtime.is_hip,
                         reason="avoid failures observed on HIP")
+    @pytest.mark.filterwarnings(
+        # The SciPy warning is buggy which is oddly fatal for bfloat16 input
+        'ignore:non-integer arg n is deprecated:DeprecationWarning')
     def test_binomdist_linspace(self, xp, scp, function, dtype, int_dtype):
         import scipy.special  # NOQA
 

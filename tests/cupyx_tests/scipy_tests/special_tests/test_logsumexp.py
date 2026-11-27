@@ -39,7 +39,8 @@ class TestLogsumexp:
         return scp.special.logsumexp(a, axis=-1, keepdims=True)
 
     @testing.with_requires('scipy')
-    @testing.for_all_dtypes(no_bool=True)
+    # bfloat16 logsumexp has large numerical differences from SciPy.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(scipy_name='scp', rtol=1e-6)
     def test_array_inputs(self, xp, scp, dtype):
         if xp.dtype(dtype).kind in 'u':
@@ -73,7 +74,8 @@ class TestLogsumexp:
         return scp.special.logsumexp(a, b=b, return_sign=True)
 
     @testing.with_requires('numpy>=2.0')
-    @testing.for_all_dtypes(no_bool=True)
+    # TODO: Revisit bfloat16 tolerances for rounding differences.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(scipy_name='scp', rtol=1e-6)
     def test_sign_multi_dims_axis(self, xp, scp, dtype):
         a = testing.shaped_random((1, 2, 3, 4), xp, dtype=dtype)

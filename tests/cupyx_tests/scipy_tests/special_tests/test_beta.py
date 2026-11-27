@@ -13,7 +13,7 @@ def _get_logspace_max(dtype):
     # keep logspace within range of the float dtype
     if dtype.char == 'd':
         return 200
-    elif dtype.char == 'f':
+    elif dtype.char == 'f' or dtype.name == 'bfloat16':
         return 30
     elif dtype.char == 'e':
         return 4
@@ -39,7 +39,8 @@ class TestBeta:
         cupy.cuda.runtime.runtimeGetVersion() < 5_00_00000,
         reason='ROCm/HIP fails in ROCm 4.x')
     @pytest.mark.parametrize('function', ['beta', 'betaln'])
-    @testing.for_all_dtypes(no_complex=True)
+    # bfloat16 beta/betaln disagrees with SciPy on NaN locations.
+    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
     @testing.numpy_cupy_allclose(atol=1e-5, rtol=1e-5, scipy_name='scp')
     def test_linspace(self, xp, scp, dtype, function):
         import scipy.special  # NOQA

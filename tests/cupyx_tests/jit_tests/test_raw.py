@@ -832,7 +832,8 @@ class TestRaw:
         f((5,), (6,), (x, y))
         testing.assert_array_equal(x, numpy.full_like(x, 1))
 
-    @testing.for_all_dtypes()
+    # The generated test kernel does not compile for bfloat16.
+    @testing.for_all_dtypes(bfloat16=False)
     def test_numpy_scalar_args(self, dtype):
         @jit.rawkernel()
         def f(x, y):

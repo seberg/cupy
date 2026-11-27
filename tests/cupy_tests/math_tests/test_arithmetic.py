@@ -381,6 +381,12 @@ class UfuncTestBase:
 
     @testing.numpy_cupy_allclose(accept_error=TypeError)
     def check_casting_out(self, in0_type, in1_type, out_type, casting, xp):
+        # Complex-to-bfloat16 output casts emit different warning counts.
+        if (casting == 'unsafe'
+                and numpy.dtype(out_type).name == 'bfloat16'
+                and 'c' in (numpy.dtype(in0_type).kind,
+                            numpy.dtype(in1_type).kind)):
+            pytest.skip('complex-to-bfloat16 casting warnings differ')
         a = testing.shaped_arange((2, 3), xp, in0_type)
         b = testing.shaped_arange((2, 3), xp, in1_type)
         c = xp.zeros((2, 3), out_type)

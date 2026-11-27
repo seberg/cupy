@@ -10,6 +10,7 @@ import pytest
 
 import cupy
 from cupy import testing
+from cupy._util import BF16
 
 
 def skip_int_equality_before_numpy_1_20(names=('dtype',)):
@@ -182,7 +183,8 @@ class TestRanges(unittest.TestCase):
     @testing.with_requires('numpy>=1.16')
     @testing.for_all_dtypes_combination(names=('dtype_range', 'dtype_out'),
                                         no_bool=True, no_complex=True)
-    @testing.numpy_cupy_array_equal()
+    @testing.numpy_cupy_allclose(
+        rtol={'default': 0} if not BF16 else {'default': 0, BF16: 1e-6})
     def test_linspace_array_start_stop(self, xp, dtype_range, dtype_out):
         start = xp.array([0, 120], dtype=dtype_range)
         stop = xp.array([100, 0], dtype=dtype_range)
@@ -223,11 +225,13 @@ class TestRanges(unittest.TestCase):
     @testing.with_requires('numpy>=1.16')
     @testing.for_all_dtypes_combination(names=('dtype_range', 'dtype_out'),
                                         no_bool=True, no_complex=True)
-    @testing.numpy_cupy_array_equal()
+    @testing.numpy_cupy_allclose(
+        rtol={'default': 0} if not BF16 else {'default': 0, BF16: 1e-6})
     def test_linspace_array_start_stop_axis1(self, xp, dtype_range, dtype_out):
         start = xp.array([0, 120], dtype=dtype_range)
         stop = xp.array([100, 0], dtype=dtype_range)
-        return xp.linspace(start, stop, num=50, dtype=dtype_out, axis=1)
+        res = xp.linspace(start, stop, num=50, dtype=dtype_out, axis=1)
+        return res
 
     @testing.with_requires('numpy>=1.16')
     @testing.for_complex_dtypes()

@@ -8,7 +8,8 @@ from cupyx import jit
 
 class TestCubWarpReduce:
 
-    @testing.for_all_dtypes(no_bool=True)
+    # The generated test kernel does not compile for bfloat16.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     def test_sum(self, dtype):
 
         @jit.rawkernel()
@@ -32,7 +33,8 @@ class TestCubWarpReduce:
         warp_reduce_sum[h, w](x, y)
         testing.assert_allclose(y, expected, rtol=1e-6)
 
-    @testing.for_all_dtypes(no_bool=True)
+    # The generated test kernel does not compile for bfloat16.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     def test_reduce_sum(self, dtype):
 
         @jit.rawkernel()
@@ -56,7 +58,8 @@ class TestCubWarpReduce:
         warp_reduce_sum[h, w](x, y)
         testing.assert_allclose(y, expected, rtol=1e-6)
 
-    @testing.for_all_dtypes(no_bool=True)
+    # CUB reduction kernels do not compile for bfloat16.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     def test_reduce_max(self, dtype):
 
         @jit.rawkernel()
@@ -83,7 +86,8 @@ class TestCubWarpReduce:
 
 class TestCubBlockReduce:
 
-    @testing.for_all_dtypes(no_bool=True)
+    # CUB reduction kernels do not compile for bfloat16.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     def test_sum(self, dtype):
 
         @jit.rawkernel()
@@ -104,9 +108,11 @@ class TestCubBlockReduce:
         expected = cupy.asnumpy(x).sum(axis=-1, dtype=dtype)
 
         block_reduce_sum[h, w](x, y)
-        testing.assert_allclose(y, expected, rtol=1e-6)
+        rtol = 1e-6 if y.dtype.name != "bfloat16" else 7e-1
+        testing.assert_allclose(y, expected, rtol=rtol)
 
-    @testing.for_all_dtypes(no_bool=True)
+    # CUB reduction kernels do not compile for bfloat16.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     def test_reduce_min(self, dtype):
 
         @jit.rawkernel()
@@ -127,4 +133,4 @@ class TestCubBlockReduce:
         expected = cupy.asnumpy(x).min(axis=-1)
 
         block_reduce_min[h, w](x, y)
-        testing.assert_allclose(y, expected, rtol=1e-6)
+        testing.assert_array_equal(y, expected)

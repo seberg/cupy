@@ -89,8 +89,10 @@ class TestFusionReductionSpecifyDtype:
         x = testing.shaped_random((3, 4), xp, dtype1, scale=10, seed=0)
         return (x,), {}
 
+    # TODO: Revisit bfloat16 tolerances for fused reduction rounding.
     @testing.for_all_dtypes_combination(
-        names=('dtype1', 'dtype2'), no_bool=True, no_complex=True)
+        names=('dtype1', 'dtype2'), no_bool=True, no_complex=True,
+        bfloat16=False)
     @fusion_utils.check_fusion(accept_error=TypeError)
     def test_sum(self, xp, dtype1, dtype2):
         return lambda x: x.sum(axis=0, dtype=dtype2)

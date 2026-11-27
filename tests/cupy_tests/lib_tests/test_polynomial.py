@@ -238,7 +238,8 @@ class TestPoly1d:
         a = testing.shaped_arange((5,), xp, dtype)
         return str(xp.poly1d(a))
 
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for evaluation rounding.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol={numpy.float16: 1e-2, 'default': 1e-6})
     def test_poly1d_call(self, xp, dtype):
         a = testing.shaped_arange((5,), xp, dtype)
@@ -376,7 +377,8 @@ class Poly1dTestBase:
 class TestPoly1dPolynomialArithmetic(Poly1dTestBase):
 
     @testing.with_requires('numpy>=1.20')
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for polynomial rounding.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-4, accept_error=TypeError)
     def test_poly1d_arithmetic(self, xp, dtype):
         if self.type_l == 'numpy_scalar' and self.type_r == 'poly1d':
@@ -410,7 +412,8 @@ class TestPoly1dMathArithmetic(Poly1dTestBase):
 class TestPoly1dRoutines(Poly1dTestBase):
 
     @testing.with_requires('numpy>=1.20')
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for polynomial rounding.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-4, accept_error=TypeError)
     def test_poly1d_routine(self, xp, dtype):
         func = getattr(xp, self.fname)
@@ -482,7 +485,8 @@ class TestPolyArithmeticShapeCombination:
 }))
 class TestPolyArithmeticDiffTypes:
 
-    @testing.for_all_dtypes_combination(names=['dtype1', 'dtype2'])
+    @testing.for_all_dtypes_combination(
+        names=['dtype1', 'dtype2'])
     def test_polyroutine_diff_types_array(self, dtype1, dtype2):
         def f(xp):
             func = getattr(xp, self.fname)
@@ -497,7 +501,8 @@ class TestPolyArithmeticDiffTypes:
         except TypeError:
             pass
 
-    @testing.for_all_dtypes_combination(names=['dtype1', 'dtype2'])
+    @testing.for_all_dtypes_combination(
+        names=['dtype1', 'dtype2'])
     def test_polyroutine_diff_types_poly1d(self, dtype1, dtype2):
         def f(xp):
             func = getattr(xp, self.fname)
@@ -532,7 +537,8 @@ class TestPolyfitParametersCombinations:
         w = x if self.weighted else None
         return xp.polyfit(x, y, self.deg, self.rcond, True, w)
 
-    @testing.for_all_dtypes()
+    # bfloat16 polynomial fits differ substantially from NumPy.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(
         atol=1e-9, accept_error=TypeError, contiguous_check=False)
     def test_polyfit_default(self, xp, dtype):
@@ -676,8 +682,10 @@ class TestPolyfitInvalid:
 
 class TestPolyfitDiffTypes:
 
+    # bfloat16 polynomial fits differ substantially from NumPy.
     @testing.for_all_dtypes_combination(
-        names=['dtype1', 'dtype2'], no_bool=True, full=True)
+        names=['dtype1', 'dtype2'], no_bool=True, full=True,
+        bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-1, atol=1e-1, accept_error=TypeError)
     def test_polyfit_unweighted_diff_types(self, xp, dtype1, dtype2):
         x = testing.shaped_arange((5,), xp, dtype1)
@@ -700,7 +708,8 @@ class TestPolyfitDiffTypes:
 }))
 class TestPolyval(Poly1dTestBase):
 
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for evaluation rounding.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol={numpy.float16: 1e-2, 'default': 1e-3})
     def test_polyval(self, xp, dtype):
         a1 = self._get_input(xp, self.type_l, dtype, size=5)
@@ -729,7 +738,8 @@ class TestPolyvalInvalidTypes(Poly1dTestBase):
 }))
 class TestPolyvalShapeCombination:
 
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for evaluation rounding.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol={numpy.float16: 1e-2, 'default': 1e-6})
     def test_polyval(self, xp, dtype):
         a = testing.shaped_arange(self.shape1, xp, dtype)
@@ -753,7 +763,9 @@ class TestPolyvalInvalidShapeCombination:
 
 class TestPolyvalDtypesCombination:
 
-    @testing.for_all_dtypes_combination(names=['dtype1', 'dtype2'], full=True)
+    # TODO: Revisit bfloat16 tolerances for evaluation rounding.
+    @testing.for_all_dtypes_combination(
+        names=['dtype1', 'dtype2'], full=True, bfloat16=False)
     @testing.numpy_cupy_allclose(rtol={numpy.float16: 1e-2, 'default': 1e-6})
     def test_polyval_diff_types_array_array(self, xp, dtype1, dtype2):
         a = testing.shaped_arange((10,), xp, dtype1)
@@ -761,7 +773,9 @@ class TestPolyvalDtypesCombination:
         return xp.polyval(a, b)
 
     @testing.with_requires('numpy>=1.25')
-    @testing.for_all_dtypes_combination(names=['dtype1', 'dtype2'], full=True)
+    # TODO: Revisit bfloat16 tolerances for evaluation rounding.
+    @testing.for_all_dtypes_combination(
+        names=['dtype1', 'dtype2'], full=True, bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-6)
     def test_polyval_diff_types_array_scalar(self, xp, dtype1, dtype2):
         a = testing.shaped_arange((10,), xp, dtype1)

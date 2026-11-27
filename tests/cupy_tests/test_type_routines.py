@@ -48,7 +48,8 @@ class TestCommonType(unittest.TestCase):
         assert type(ret) is type
         return ret
 
-    @testing.for_all_dtypes(no_bool=True)
+    @testing.for_all_dtypes(
+        no_bool=True, bfloat16=False)  # common_type is poor for user-dtypes
     @testing.numpy_cupy_equal()
     def test_common_type_single_argument(self, xp, dtype):
         array = _generate_type_routines_input(xp, dtype, 'array')
@@ -56,8 +57,9 @@ class TestCommonType(unittest.TestCase):
         assert type(ret) is type
         return ret
 
+    # NumPy common_type rejects bfloat16 as non-numeric.
     @testing.for_all_dtypes_combination(
-        names=('dtype1', 'dtype2'), no_bool=True)
+        names=('dtype1', 'dtype2'), no_bool=True, bfloat16=False)
     @testing.numpy_cupy_equal()
     def test_common_type_two_arguments(self, xp, dtype1, dtype2):
         array1 = _generate_type_routines_input(xp, dtype1, 'array')

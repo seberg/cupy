@@ -41,7 +41,7 @@ class TestSumprod:
         a = testing.shaped_arange((2, 3, 4), xp, dtype)
         return xp.sum(a)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)  # NumPy imprecise
     @testing.numpy_cupy_allclose(rtol=1e-6)
     def test_sum_all2(self, xp, dtype):
         a = testing.shaped_arange((20, 30, 40), xp, dtype)
@@ -53,7 +53,8 @@ class TestSumprod:
         a = testing.shaped_arange((2, 3, 4), xp, dtype).transpose(2, 0, 1)
         return a.sum()
 
-    @testing.for_all_dtypes()
+    # bfloat16 reduction results differ substantially from NumPy.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-6)
     def test_sum_all_transposed2(self, xp, dtype):
         a = testing.shaped_arange((20, 30, 40), xp, dtype).transpose(2, 0, 1)
@@ -102,31 +103,36 @@ class TestSumprod:
         a = testing.shaped_arange((2, 3, 4), xp, dtype).transpose(2, 0, 1)
         return a.sum(axis=1)
 
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for cumulative/reduction rounding.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(contiguous_check=False)
     def test_sum_axis_transposed2(self, xp, dtype):
         a = testing.shaped_arange((20, 30, 40), xp, dtype).transpose(2, 0, 1)
         return a.sum(axis=1)
 
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for cumulative/reduction rounding.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_sum_axes(self, xp, dtype):
         a = testing.shaped_arange((2, 3, 4, 5), xp, dtype)
         return a.sum(axis=(1, 3))
 
-    @testing.for_all_dtypes()
+    # bfloat16 reduction results differ substantially from NumPy.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-4)
     def test_sum_axes2(self, xp, dtype):
         a = testing.shaped_arange((20, 30, 40, 50), xp, dtype)
         return a.sum(axis=(1, 3))
 
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for cumulative/reduction rounding.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-6)
     def test_sum_axes3(self, xp, dtype):
         a = testing.shaped_arange((2, 3, 4, 5), xp, dtype)
         return a.sum(axis=(0, 2, 3))
 
-    @testing.for_all_dtypes()
+    # bfloat16 reduction results differ substantially from NumPy.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-6)
     def test_sum_axes4(self, xp, dtype):
         a = testing.shaped_arange((20, 30, 40, 50), xp, dtype)
@@ -186,13 +192,15 @@ class TestSumprod:
         a = testing.shaped_arange((2, 3), xp, dtype)
         return xp.prod(a)
 
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for cumulative/reduction rounding.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_prod_axis(self, xp, dtype):
         a = testing.shaped_arange((2, 3, 4), xp, dtype)
         return a.prod(axis=1)
 
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for reduction rounding.
+    @testing.for_all_dtypes(bfloat16=False)  # NumPy is less precise
     @testing.numpy_cupy_allclose()
     def test_external_prod_axis(self, xp, dtype):
         a = testing.shaped_arange((2, 3, 4), xp, dtype)
@@ -730,7 +738,8 @@ class TestCumsum:
         return self._cumsum(xp, a)
 
     @pytest.mark.parametrize("axis", axes)
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for cumulative/reduction rounding.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(contiguous_check=False)
     def test_cumsum_axis(self, xp, dtype, axis):
         n = len(axes)
@@ -757,7 +766,8 @@ class TestCumsum:
         return out
 
     @pytest.mark.parametrize("axis", axes)
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for cumulative/reduction rounding.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_cumsum_axis_out(self, xp, dtype, axis):
         n = len(axes)
@@ -768,7 +778,8 @@ class TestCumsum:
         return out
 
     @pytest.mark.parametrize("axis", axes)
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for cumulative/reduction rounding.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_cumsum_axis_out_noncontiguous(self, xp, dtype, axis):
         n = len(axes)
@@ -779,7 +790,8 @@ class TestCumsum:
         return out
 
     @pytest.mark.parametrize("axis", axes)
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for cumulative/reduction rounding.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(contiguous_check=False)
     def test_ndarray_cumsum_axis(self, xp, dtype, axis):
         n = len(axes)
@@ -867,19 +879,22 @@ class TestCumprod:
         self._cumprod(xp, a, out=out)
         return out
 
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for cumulative/reduction rounding.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-6)
     def test_cumprod_2dim_without_axis(self, xp, dtype):
         a = testing.shaped_arange((4, 5), xp, dtype)
         return self._cumprod(xp, a)
 
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for cumulative/reduction rounding.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_cumprod_2dim_with_axis(self, xp, dtype):
         a = testing.shaped_arange((4, 5), xp, dtype)
         return self._cumprod(xp, a, axis=1)
 
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for cumulative/reduction rounding.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_ndarray_cumprod_2dim_with_axis(self, xp, dtype):
         a = testing.shaped_arange((4, 5), xp, dtype)
@@ -1026,7 +1041,8 @@ class TestNanCumSumProd:
             a = testing.shaped_random(shape, numpy, dtype=dtype)
         return a
 
-    @testing.for_all_dtypes()
+    # TODO: Check bfloat16 accumulation tolerances as well.
+    @testing.for_all_dtypes(bfloat16=False)  # NumPy 2.5 returns float32
     @testing.numpy_cupy_allclose()
     def test_nancumsumprod(self, xp, dtype, shape, axis, func):
         if axis is not None and axis >= len(shape):
@@ -1035,7 +1051,8 @@ class TestNanCumSumProd:
         out = getattr(xp, func)(a, axis=axis)
         return xp.ascontiguousarray(out)
 
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for cumulative/reduction rounding.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_nancumsumprod_out(self, xp, dtype, shape, axis, func):
         dtype = numpy.dtype(dtype)
@@ -1383,13 +1400,15 @@ class TestCumulativeSumProd:
         a = testing.shaped_arange((5,), xp, dtype)
         return getattr(xp, func)(a)
 
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for cumulative/reduction rounding.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-6, contiguous_check=False)
     def test_axis(self, xp, dtype, func):
         a = testing.shaped_arange((3, 4, 5), xp, dtype)
         return getattr(xp, func)(a, axis=1)
 
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for cumulative/reduction rounding.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-6)
     def test_negative_axis(self, xp, dtype, func):
         a = testing.shaped_arange((3, 4, 5), xp, dtype)
@@ -1407,19 +1426,22 @@ class TestCumulativeSumProd:
         a = testing.shaped_arange((5,), xp, dtype)
         return getattr(xp, func)(a, include_initial=True)
 
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for cumulative/reduction rounding.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-6, contiguous_check=False)
     def test_axis_include_initial(self, xp, dtype, func):
         a = testing.shaped_arange((3, 4, 5), xp, dtype)
         return getattr(xp, func)(a, axis=1, include_initial=True)
 
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for cumulative/reduction rounding.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-6)
     def test_negative_axis_include_initial(self, xp, dtype, func):
         a = testing.shaped_arange((3, 4, 5), xp, dtype)
         return getattr(xp, func)(a, axis=-1, include_initial=True)
 
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for cumulative/reduction rounding.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-6)
     def test_out(self, xp, dtype, func):
         a = testing.shaped_arange((3, 4, 5), xp, dtype)
@@ -1427,7 +1449,8 @@ class TestCumulativeSumProd:
         getattr(xp, func)(a, axis=1, out=out)
         return out
 
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for cumulative/reduction rounding.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-6)
     def test_out_include_initial(self, xp, dtype, func):
         a = testing.shaped_arange((3, 4, 5), xp, dtype)
@@ -1490,7 +1513,8 @@ class TestCumulativeSumProd:
         a = testing.shaped_arange((5,), xp, in_dtype)
         return getattr(xp, func)(a, include_initial=True)
 
-    @testing.for_all_dtypes(no_bool=True)
+    # TODO: Revisit bfloat16 tolerances for cumulative/reduction rounding.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-6)
     def test_out_dtype_cast(self, xp, dtype, func):
         # out has a different dtype than x -- result must be cast.

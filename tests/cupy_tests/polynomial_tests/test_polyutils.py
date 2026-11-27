@@ -14,31 +14,36 @@ from cupy import testing
 }))
 class TestAsSeries(unittest.TestCase):
 
-    @testing.for_all_dtypes(no_bool=True)
+    # NumPy polynomial helpers reject bfloat16 coefficients.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_as_series(self, xp, dtype):
         a = testing.shaped_random((1000,), xp, dtype)
         return xp.polynomial.polyutils.as_series(a, trim=self.trim)
 
-    @testing.for_all_dtypes(no_bool=True)
+    # NumPy polynomial helpers reject bfloat16 coefficients.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_as_series_zeros(self, xp, dtype):
         a = xp.zeros(10, dtype)
         return xp.polynomial.polyutils.as_series(a, trim=self.trim)
 
-    @testing.for_all_dtypes(no_bool=True)
+    # NumPy polynomial helpers reject bfloat16 coefficients.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_as_series_trailing_zeros(self, xp, dtype):
         a = xp.array([3, 5, 7, 0, 0, 0], dtype)
         return xp.polynomial.polyutils.as_series(a, trim=self.trim)
 
-    @testing.for_all_dtypes(no_bool=True)
+    # NumPy polynomial helpers reject bfloat16 coefficients.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_as_series_list(self, xp, dtype):
         a = [xp.array([3, 5, 7, -4, 1, 2]).astype(dtype)]
         return xp.polynomial.polyutils.as_series(a, trim=self.trim)
 
-    @testing.for_all_dtypes(no_bool=True)
+    # NumPy polynomial helpers reject bfloat16 coefficients.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_as_series_2dim(self, xp, dtype):
         a = testing.shaped_random((4, 5), xp, dtype)
@@ -106,38 +111,44 @@ class TestTrimseq(unittest.TestCase):
 }))
 class TestTrimcoef(unittest.TestCase):
 
-    @testing.for_all_dtypes(no_bool=True)
+    # NumPy polynomial helpers reject bfloat16 coefficients.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_trimcoef(self, xp, dtype):
         a = testing.shaped_random((10,), xp, dtype)
         return xp.polynomial.polyutils.trimcoef(a, dtype(self.tol))
 
-    @testing.for_all_dtypes(no_bool=True)
+    # NumPy polynomial helpers reject bfloat16 coefficients.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_trimcoef_trailing_zeros(self, xp, dtype):
         a = xp.array([1, 2, 0, 3, 0, 3e-4, 1e-3], dtype)
         return xp.polynomial.polyutils.trimcoef(a, dtype(self.tol))
 
+    # NumPy polynomial helpers reject bfloat16 coefficients.
     @testing.for_all_dtypes_combination(
-        names=['dtype1', 'dtype2'], no_bool=True)
+        names=['dtype1', 'dtype2'], no_bool=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_trimcoef_diff_types(self, xp, dtype1, dtype2):
         a = xp.array([1, 2, 0, 3, 0], dtype1)
         return xp.polynomial.polyutils.trimcoef(a, dtype2(self.tol))
 
-    @testing.for_all_dtypes(no_bool=True)
+    # NumPy polynomial helpers reject bfloat16 coefficients.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_trimcoef_zeros(self, xp, dtype):
         a = xp.zeros(10, dtype)
         return xp.polynomial.polyutils.trimcoef(a, dtype(self.tol))
 
-    @testing.for_all_dtypes(no_bool=True)
+    # NumPy polynomial helpers reject bfloat16 coefficients.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_trimcoef_almost_zeros(self, xp, dtype):
         a = xp.array([1e-3, 1e-5, 1e-4], dtype)
         return xp.polynomial.polyutils.trimcoef(a, dtype(self.tol))
 
-    @testing.for_all_dtypes(no_bool=True)
+    # NumPy polynomial helpers reject bfloat16 coefficients.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_trimcoef_zero_dim(self, xp, dtype):
         a = testing.shaped_random((), xp, dtype)

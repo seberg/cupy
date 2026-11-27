@@ -75,7 +75,8 @@ class TestDctDst:
             testing.assert_array_equal(x, x_orig)
         return out
 
-    @testing.for_all_dtypes()
+    # bfloat16 result dtype differs: CuPy float32, reference float64.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(
         scipy_name='scp', rtol=1e-4, atol=1e-5, accept_error=ValueError,
         contiguous_check=False
@@ -87,7 +88,7 @@ class TestDctDst:
     @pytest.mark.thread_unsafe(
         reason="scipy's set_backend() not fully thread-safe: "
         "https://github.com/scipy/scipy/issues/25878#issuecomment-6033943581")
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-4, atol=1e-5, accept_error=ValueError,
                                  contiguous_check=False)
     def test_dct_backend(self, xp, dtype):
@@ -158,7 +159,8 @@ class TestDctnDstn:
             testing.assert_array_equal(x, x_orig)
         return out
 
-    @testing.for_all_dtypes()
+    # bfloat16 result dtype differs: CuPy float32, reference float64.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(
         scipy_name='scp', rtol=1e-4, atol=1e-5, accept_error=ValueError,
         contiguous_check=False
@@ -170,7 +172,7 @@ class TestDctnDstn:
     @pytest.mark.thread_unsafe(
         reason="scipy's set_backend() not fully thread-safe: "
         "https://github.com/scipy/scipy/issues/25878#issuecomment-6033943581")
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-4, atol=1e-5, accept_error=ValueError,
                                  contiguous_check=False)
     def test_dctn_backend(self, xp, dtype):

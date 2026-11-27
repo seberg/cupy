@@ -340,7 +340,8 @@ class TestListArgEinSum:
 ))
 class TestEinSumUnaryOperation:
 
-    @testing.for_all_dtypes(no_bool=False)
+    # NumPy einsum does not support bfloat16 operands.
+    @testing.for_all_dtypes(no_bool=False, bfloat16=False)
     @testing.numpy_cupy_allclose(
         rtol={numpy.float16: 1e-1, 'default': 1e-7}, contiguous_check=False)
     def test_einsum_unary(self, xp, dtype):
@@ -351,7 +352,8 @@ class TestEinSumUnaryOperation:
             testing.assert_allclose(optimized_out, out)
         return out
 
-    @testing.for_all_dtypes(no_bool=False)
+    # NumPy einsum does not support bfloat16 operands.
+    @testing.for_all_dtypes(no_bool=False, bfloat16=False)
     @testing.numpy_cupy_equal()
     def test_einsum_unary_views(self, xp, dtype):
         a = testing.shaped_arange(self.shape_a, xp, dtype)
@@ -362,7 +364,8 @@ class TestEinSumUnaryOperation:
     @testing.for_all_dtypes_combination(
         ['dtype_a', 'dtype_out'],
         no_bool=False,
-        no_complex=True)  # avoid ComplexWarning
+        no_complex=True,  # avoid ComplexWarning
+        bfloat16=False)
     @testing.numpy_cupy_allclose(
         rtol={numpy.float16: 1e-1, 'default': 1e-7}, contiguous_check=False)
     def test_einsum_unary_dtype(self, xp, dtype_a, dtype_out):
@@ -436,10 +439,12 @@ class TestEinSumUnaryOperationWithScalar:
      'subscripts': '...lmn,lmno->...o'},
 ))
 class TestEinSumBinaryOperation:
+    # NumPy einsum does not support bfloat16 operands.
     @testing.for_all_dtypes_combination(
         ['dtype_a', 'dtype_b'],
         no_bool=False,
-        no_float16=False)
+        no_float16=False,
+        bfloat16=False)
     @testing.numpy_cupy_allclose(
         rtol={numpy.float16: 1e-2, 'default': 1e-7}, contiguous_check=False)
     def test_einsum_binary(self, xp, dtype_a, dtype_b):
@@ -483,10 +488,12 @@ class TestEinSumBinaryOperationWithScalar:
      'subscripts': 'a...,...,c...->ac...'},
 ))
 class TestEinSumTernaryOperation:
+    # TODO: Revisit bfloat16 tolerances for contraction rounding.
     @testing.for_all_dtypes_combination(
         ['dtype_a', 'dtype_b', 'dtype_c'],
         no_bool=False,
-        no_float16=False)
+        no_float16=False,
+        bfloat16=False)
     @testing.numpy_cupy_allclose(contiguous_check=False)
     def test_einsum_ternary(self, xp, dtype_a, dtype_b, dtype_c):
         a = testing.shaped_arange(self.shape_a, xp, dtype_a)

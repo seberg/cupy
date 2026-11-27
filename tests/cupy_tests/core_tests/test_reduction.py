@@ -130,7 +130,8 @@ class TestSimpleReductionFunctionComplexWarning(unittest.TestCase):
         _core.set_reduction_accelerators(self.accelerators)
 
     @testing.for_complex_dtypes(name='c_dtype')
-    @testing.for_float_dtypes(name='f_dtype')
+    # Complex-to-bfloat16 reduction kernels do not compile.
+    @testing.for_float_dtypes(name='f_dtype', bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_warns(self, xp, c_dtype, f_dtype):
         with pytest.warns(ComplexWarning):

@@ -37,7 +37,7 @@ def _gen_array(dtype):
         array = cupy.random.random((2, 3)).astype(dtype)
     elif dtype == cupy.bool_:
         array = cupy.random.randint(0, 2, size=(2, 3)).astype(cupy.bool_)
-    elif dtype.name == "bfloat16":
+    elif numpy.dtype(dtype).name == "bfloat16":
         array = cupy.random.rand(2, 3).astype(dtype)
     else:
         assert False, f'unrecognized dtype: {dtype}'

@@ -207,21 +207,24 @@ class TestSort(unittest.TestCase):
     # Test descending order
 
     @testing.with_requires('numpy>=2.5')
-    @testing.for_all_dtypes()
+    # NumPy has no descending bfloat16 sort/argsort implementation.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_sort_descending_dtype(self, xp, dtype):
         a = testing.shaped_random((10,), xp, dtype)
         return self._sort(xp, a, use_method=True, descending=True)
 
     @testing.with_requires('numpy>=2.5')
-    @testing.for_all_dtypes()
+    # NumPy has no descending bfloat16 sort/argsort implementation.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_external_sort_descending_dtype(self, xp, dtype):
         a = testing.shaped_random((10,), xp, dtype)
         return self._sort(xp, a, use_method=False, descending=True)
 
     @testing.with_requires('numpy>=2.5')
-    @testing.for_all_dtypes()
+    # NumPy has no descending bfloat16 sort/argsort implementation.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_sort_descending_axis(self, xp, dtype):
         # Enough rows, and long enough rows, that a segmented sort emitting
@@ -231,7 +234,8 @@ class TestSort(unittest.TestCase):
         return self._sort(xp, a, use_method=True, axis=1, descending=True)
 
     @testing.with_requires('numpy>=2.5')
-    @testing.for_all_dtypes()
+    # NumPy has no descending bfloat16 sort/argsort implementation.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_external_sort_descending_axis(self, xp, dtype):
         a = testing.shaped_random((4, 5, 6), xp, dtype)
@@ -483,14 +487,16 @@ class TestArgsort(unittest.TestCase):
     # Test descending order
 
     @testing.with_requires('numpy>=2.5')
-    @testing.for_all_dtypes()
+    # NumPy has no descending bfloat16 sort/argsort implementation.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_argsort_descending_dtype(self, xp, dtype):
         a = testing.shaped_random((10,), xp, dtype)
         return self.argsort(a, descending=True)
 
     @testing.with_requires('numpy>=2.5')
-    @testing.for_all_dtypes()
+    # NumPy has no descending bfloat16 sort/argsort implementation.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_argsort_descending_axis(self, xp, dtype):
         a = testing.shaped_random((4, 5, 6), xp, dtype)

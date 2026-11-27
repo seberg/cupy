@@ -64,13 +64,15 @@ class TestPolynomial(unittest.TestCase):
         a = testing.shaped_random((3, 2, 1), xp, dtype)
         return xp.polynomial.polynomial.polyvander(a, 2)
 
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for rounding differences.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-5)
     def test_polyvander_zero_dim(self, xp, dtype):
         a = testing.shaped_random((), xp, dtype)
         return xp.polynomial.polynomial.polyvander(a, 5)
 
-    @testing.for_all_dtypes(no_bool=True)
+    # NumPy polynomial helpers reject bfloat16 coefficients.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-6)
     def test_polycompanion(self, xp, dtype):
         a = testing.shaped_random((1000,), xp, dtype)
@@ -90,7 +92,8 @@ class TestPolynomial(unittest.TestCase):
             with pytest.raises(ValueError):
                 xp.polynomial.polynomial.polycompanion(a)
 
-    @testing.for_all_dtypes(no_bool=True)
+    # NumPy polynomial helpers reject bfloat16 coefficients.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_polycompanion_trailing_zeros(self, xp, dtype):
         a = xp.array([3, 5, 7, 0, 0, 0], dtype)
@@ -103,13 +106,15 @@ class TestPolynomial(unittest.TestCase):
             with pytest.raises(ValueError):
                 xp.polynomial.polynomial.polycompanion(a)
 
-    @testing.for_all_dtypes(no_bool=True)
+    # NumPy polynomial helpers reject bfloat16 coefficients.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_polycompanion_single_value2(self, xp, dtype):
         a = xp.array([0, 0, 0, 3], dtype)
         return xp.polynomial.polynomial.polycompanion(a)
 
-    @testing.for_all_dtypes(no_bool=True)
+    # NumPy polynomial helpers reject bfloat16 coefficients.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_polycompanion_single_value3(self, xp, dtype):
         a = xp.array([0, 3, 0, 0], dtype)

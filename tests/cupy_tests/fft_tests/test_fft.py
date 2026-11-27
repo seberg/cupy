@@ -131,14 +131,15 @@ def test_multi_gpu_config_deprecated():
 }))
 class TestFft:
 
-    @testing.for_all_dtypes()
+    # bfloat16 result dtype differs: CuPy complex128, reference complex64.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_fft(self, xp, dtype):
         a = testing.shaped_random(self.shape, xp, dtype)
         return xp.fft.fft(a, n=self.n, norm=self.norm)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     # NumPy 1.17.0 and 1.17.1 raises ZeroDivisonError due to a bug
@@ -157,7 +158,8 @@ class TestFft:
 }))
 class TestFftOrder:
 
-    @testing.for_all_dtypes()
+    # bfloat16 result dtype differs: CuPy complex128, reference complex64.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_fft(self, xp, dtype):
@@ -166,7 +168,8 @@ class TestFftOrder:
             a = xp.asfortranarray(a)
         return xp.fft.fft(a, axis=self.axis)
 
-    @testing.for_all_dtypes()
+    # NumPy FFT normalization has no bfloat16 sqrt/reciprocal loop.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_ifft(self, xp, dtype):
@@ -380,7 +383,8 @@ class TestFft2:
 
     @nd_planning_states()
     @testing.for_orders('CF')
-    @testing.for_all_dtypes()
+    # bfloat16 result dtype differs: CuPy complex128, reference complex64.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_fft2(self, xp, dtype, order, enable_nd):
@@ -403,7 +407,8 @@ class TestFft2:
 
     @nd_planning_states()
     @testing.for_orders('CF')
-    @testing.for_all_dtypes()
+    # NumPy FFT normalization has no bfloat16 sqrt/reciprocal loop.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_ifft2(self, xp, dtype, order, enable_nd):
@@ -464,7 +469,8 @@ class TestFftn:
 
     @nd_planning_states()
     @testing.for_orders('CF')
-    @testing.for_all_dtypes()
+    # NumPy FFT normalization has no bfloat16 sqrt/reciprocal loop.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_fftn(self, xp, dtype, order, enable_nd):
@@ -487,7 +493,8 @@ class TestFftn:
 
     @nd_planning_states()
     @testing.for_orders('CF')
-    @testing.for_all_dtypes()
+    # NumPy FFT normalization has no bfloat16 sqrt/reciprocal loop.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_ifftn(self, xp, dtype, order, enable_nd):
@@ -925,14 +932,16 @@ class TestFftnContiguity:
 }))
 class TestRfft:
 
-    @testing.for_all_dtypes(no_complex=True)
+    # bfloat16 result dtype differs: CuPy complex128, reference complex64.
+    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_rfft(self, xp, dtype):
         a = testing.shaped_random(self.shape, xp, dtype)
         return xp.fft.rfft(a, n=self.n, norm=self.norm)
 
-    @testing.for_all_dtypes()
+    # NumPy FFT normalization has no bfloat16 sqrt/reciprocal loop.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_irfft(self, xp, dtype):
@@ -950,7 +959,8 @@ class TestRfft:
 }))
 class TestPlanCtxManagerRfft:
 
-    @testing.for_all_dtypes(no_complex=True)
+    # NumPy FFT normalization has no bfloat16 sqrt/reciprocal loop.
+    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_rfft(self, xp, dtype):
@@ -1027,7 +1037,8 @@ class TestRfft2:
 
     @nd_planning_states()
     @testing.for_orders('CF')
-    @testing.for_all_dtypes(no_complex=True)
+    # bfloat16 result dtype differs: CuPy complex128, reference complex64.
+    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_rfft2(self, xp, dtype, order, enable_nd):
@@ -1040,7 +1051,8 @@ class TestRfft2:
 
     @nd_planning_states()
     @testing.for_orders('CF')
-    @testing.for_all_dtypes()
+    # bfloat16 result dtype differs: CuPy float64, reference float32.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_irfft2(self, xp, dtype, order, enable_nd):
@@ -1110,7 +1122,8 @@ class TestRfftn:
 
     @nd_planning_states()
     @testing.for_orders('CF')
-    @testing.for_all_dtypes(no_complex=True)
+    # bfloat16 result dtype differs: CuPy complex128, reference complex64.
+    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_rfftn(self, xp, dtype, order, enable_nd):
@@ -1123,7 +1136,8 @@ class TestRfftn:
 
     @nd_planning_states()
     @testing.for_orders('CF')
-    @testing.for_all_dtypes()
+    # NumPy FFT normalization has no bfloat16 sqrt/reciprocal loop.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_irfftn(self, xp, dtype, order, enable_nd):
@@ -1207,7 +1221,8 @@ class TestPlanCtxManagerRfftn:
                             "instead")
 
     @nd_planning_states()
-    @testing.for_all_dtypes(no_complex=True)
+    # NumPy FFT normalization has no bfloat16 sqrt/reciprocal loop.
+    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_rfftn(self, xp, dtype, enable_nd):
@@ -1226,7 +1241,8 @@ class TestPlanCtxManagerRfftn:
     @pytest.mark.skipif(cupy.cuda.runtime.is_hip,
                         reason="hipFFT's PlanNd for C2R is buggy")
     @nd_planning_states()
-    @testing.for_all_dtypes()
+    # NumPy FFT normalization has no bfloat16 sqrt/reciprocal loop.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_irfftn(self, xp, dtype, enable_nd):
@@ -1338,7 +1354,8 @@ class TestRfftnEmptyAxes:
 }))
 class TestHfft:
 
-    @testing.for_all_dtypes()
+    # NumPy FFT normalization has no bfloat16 sqrt/reciprocal loop.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_hfft(self, xp, dtype):
@@ -1346,7 +1363,8 @@ class TestHfft:
         out = xp.fft.hfft(a, n=self.n, norm=self.norm)
         return out
 
-    @testing.for_all_dtypes(no_complex=True)
+    # NumPy FFT normalization has no bfloat16 sqrt/reciprocal loop.
+    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
     @testing.numpy_cupy_allclose(rtol=1e-3, atol=1e-7, accept_error=ValueError,
                                  contiguous_check=False)
     def test_ihfft(self, xp, dtype):

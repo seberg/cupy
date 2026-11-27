@@ -99,7 +99,8 @@ class TestFusionTuple(FusionTestBase):
     @pytest.mark.skipif(
         not fusion_utils.can_use_grid_synchronization(),
         reason='Requires CUDA grid synchronization')
-    @testing.for_all_dtypes(no_bool=True, no_complex=True)
+    # TODO: Revisit bfloat16 tolerances for fused rounding.
+    @testing.for_all_dtypes(no_bool=True, no_complex=True, bfloat16=False)
     @fusion_utils.check_fusion(generate_inputs_args=(2,))
     def test_various_shape(self, xp, dtype):
         def func(x, y):
@@ -181,7 +182,8 @@ class TestSpecialValues(FusionTestBase):
         return func
 
     @testing.with_requires('numpy>=2.0')
-    @testing.for_float_dtypes()
+    # bfloat16 result dtype differs: CuPy float32, reference bfloat16.
+    @testing.for_float_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_inf_where(self, xp, dtype):
         @cupy.fuse()
@@ -194,7 +196,8 @@ class TestSpecialValues(FusionTestBase):
         return func(points, mask)
 
     @testing.with_requires('numpy>=2.0')
-    @testing.for_float_dtypes()
+    # bfloat16 result dtype differs: CuPy float32, reference bfloat16.
+    @testing.for_float_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_nan_where(self, xp, dtype):
         @cupy.fuse()

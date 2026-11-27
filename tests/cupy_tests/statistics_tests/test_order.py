@@ -84,7 +84,7 @@ class TestQuantile:
             memptr = original_allocator(size)
             base_size = memptr.mem.size
             assert base_size % 512 == 0
-            item_size = dtype().itemsize
+            item_size = numpy.dtype(dtype).itemsize
             shape = (base_size // item_size,)
             x = cupy.ndarray(memptr=memptr, shape=shape, dtype=dtype)
             x.fill(cupy.nan)

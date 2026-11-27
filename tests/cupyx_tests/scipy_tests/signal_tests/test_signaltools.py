@@ -33,13 +33,15 @@ class TestConvolveCorrelate:
     tols = {np.float32: 1e-5, np.complex64: 1e-5,
             np.float16: 1e-3, 'default': 1e-10}
 
-    @testing.for_all_dtypes()
+    # Direct convolution/correlation lacks bfloat16 support.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(atol=tols, rtol=tols, scipy_name='scp',
                                  accept_error=ValueError)
     def test_convolve(self, xp, scp, dtype):
         return self._filter('convolve', dtype, xp, scp)
 
-    @testing.for_all_dtypes()
+    # Direct convolution/correlation lacks bfloat16 support.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(atol=tols, rtol=tols, scipy_name='scp',
                                  accept_error=ValueError)
     def test_correlate(self, xp, scp, dtype):
@@ -77,14 +79,16 @@ class TestFFTConvolve:
         self._hip_skip_invalid_condition()
         return self._filter('fftconvolve', dtype, xp, scp)
 
-    @testing.for_all_dtypes(no_bool=True)
+    # TODO: Revisit bfloat16 tolerances for rounding differences.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(atol=tols, rtol=tols, scipy_name='scp',
                                  accept_error=ValueError)
     def test_convolve_fft(self, xp, scp, dtype):
         self._hip_skip_invalid_condition()
         return self._filter('convolve', dtype, xp, scp, method='fft')
 
-    @testing.for_all_dtypes(no_bool=True)
+    # TODO: Revisit bfloat16 tolerances for rounding differences.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(atol=tols, rtol=tols, scipy_name='scp',
                                  accept_error=ValueError)
     def test_correlate_fft(self, xp, scp, dtype):
@@ -203,13 +207,13 @@ class TestConvolveCorrelate2D:
     tols = {np.float32: 5e-4, np.complex64: 5e-4,
             np.float16: 1e-3, 'default': 1e-10}
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)  # bfloat16 fails for scipy
     @testing.numpy_cupy_allclose(atol=tols, rtol=tols, scipy_name='scp',
                                  accept_error=ValueError)
     def test_convolve2d(self, xp, scp, dtype):
         return self._filter('convolve2d', dtype, xp, scp)
 
-    @testing.for_all_dtypes()
+    @testing.for_all_dtypes(bfloat16=False)  # bfloat16 fails for scipy
     @testing.numpy_cupy_allclose(atol=tols, rtol=tols, scipy_name='scp',
                                  accept_error=ValueError)
     def test_correlate2d(self, xp, scp, dtype):
@@ -322,7 +326,8 @@ class TestWiener:
     tols = {np.float32: 1e-5, np.complex64: 1e-5,
             np.float16: 1e-3, 'default': 1e-10}
 
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for rounding differences.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(atol=tols, rtol=tols, scipy_name='scp')
     def test_wiener(self, xp, scp, dtype):
         im = testing.shaped_random(self.im, xp, dtype)
@@ -370,7 +375,8 @@ class TestOrderFilter:
 }))
 class TestMedFilt:
     @testing.with_requires('scipy')
-    @testing.for_all_dtypes()
+    # SciPy medfilt does not support bfloat16 inputs.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(
         atol=1e-8, rtol=1e-8, scipy_name='scp',
         accept_error=ValueError)  # for even kernels
@@ -395,7 +401,8 @@ class TestMedFilt:
 }))
 class TestMedFilt2d:
     @testing.with_requires('scipy')
-    @testing.for_all_dtypes()
+    # SciPy medfilt does not support bfloat16 inputs.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(
         atol=1e-8, rtol=1e-8, scipy_name='scp',
         accept_error=ValueError)  # for even kernels

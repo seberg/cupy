@@ -17,7 +17,8 @@ rtol_low = {'default': 1e-6, cupy.float16: 1e-3, cupy.float64: 1e-14}
 @testing.with_requires('scipy')
 class TestLogSoftmax:
 
-    @testing.for_all_dtypes(no_bool=True)
+    # TODO: Check bfloat16 log-softmax tolerances and cancellation.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(scipy_name='scp', atol=atol, rtol=rtol)
     def test_log_softmax_ndarray_1(self, xp, scp, dtype):
         if xp.dtype(dtype).kind == 'u':
@@ -37,7 +38,8 @@ class TestLogSoftmax:
         a = xp.array([1000, 1]).astype(dtype)
         return scp.special.log_softmax(a)
 
-    @testing.for_all_dtypes(no_bool=True)
+    # TODO: Check bfloat16 log-softmax tolerances and cancellation.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(scipy_name='scp', atol=atol, rtol=rtol)
     def test_log_softmax_2d(self, xp, scp, dtype):
         if xp.dtype(dtype).kind == 'u':
@@ -53,7 +55,8 @@ class TestLogSoftmax:
         a = xp.array([[100, 1000], [1e-10, 1e-10]])
         return scp.special.log_softmax(a, axis=-1)
 
-    @testing.for_all_dtypes(no_bool=True)
+    # TODO: Check bfloat16 log-softmax tolerances and cancellation.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(
         scipy_name='scp',
         atol=atol_low,

@@ -113,7 +113,8 @@ class TestEntropy(unittest.TestCase):
 
         return scp.stats.entropy(pk, qk=qk, base=base, axis=axis)
 
-    @testing.for_all_dtypes(no_complex=True)
+    # bfloat16 result dtype differs: CuPy float64, reference float32.
+    @testing.for_all_dtypes(no_complex=True, bfloat16=False)
     @testing.numpy_cupy_allclose(
         rtol={cupy.float32: 1e-3, 'default': 1e-15}, scipy_name='scp')
     def test_entropy(self, xp, scp, dtype):

@@ -75,21 +75,24 @@ class TestHistogram(unittest.TestCase):
             x, bins, bins.size, weights, y)
         testing.assert_array_equal(counters, [0, 2, 0])
 
-    @testing.for_all_dtypes(no_bool=True, no_complex=True)
+    # CUB histogram dispatch does not support bfloat16.
+    @testing.for_all_dtypes(no_bool=True, no_complex=True, bfloat16=False)
     @testing.numpy_cupy_allclose(atol=1e-7)
     def test_histogram(self, xp, dtype):
         x = testing.shaped_arange((10,), xp, dtype)
         y, bin_edges = xp.histogram(x)
         return y, bin_edges
 
-    @testing.for_all_dtypes(no_bool=True, no_complex=True)
+    # CUB histogram dispatch does not support bfloat16.
+    @testing.for_all_dtypes(no_bool=True, no_complex=True, bfloat16=False)
     @testing.numpy_cupy_allclose(atol={numpy.float16: 1.5e-4, 'default': 1e-7})
     def test_histogram_same_value(self, xp, dtype):
         x = xp.zeros(10, dtype)
         y, bin_edges = xp.histogram(x, 3)
         return y, bin_edges
 
-    @testing.for_all_dtypes(no_bool=True, no_complex=True)
+    # CUB histogram dispatch does not support bfloat16.
+    @testing.for_all_dtypes(no_bool=True, no_complex=True, bfloat16=False)
     @testing.numpy_cupy_allclose(atol=2e-7)
     def test_histogram_density(self, xp, dtype):
         x = testing.shaped_arange((10,), xp, dtype)
@@ -99,7 +102,8 @@ class TestHistogram(unittest.TestCase):
         testing.assert_allclose(area, 1)
         return y, bin_edges
 
-    @testing.for_float_dtypes()
+    # CUB histogram dispatch does not support bfloat16.
+    @testing.for_float_dtypes(bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_histogram_range_lower_outliers(self, xp, dtype):
         # Check that lower outliers are not tallied
@@ -108,7 +112,8 @@ class TestHistogram(unittest.TestCase):
         assert int(h.sum()) == 9
         return h, b
 
-    @testing.for_float_dtypes()
+    # CUB histogram dispatch does not support bfloat16.
+    @testing.for_float_dtypes(bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_histogram_range_upper_outliers(self, xp, dtype):
         # Check that upper outliers are not tallied
@@ -117,7 +122,8 @@ class TestHistogram(unittest.TestCase):
         assert int(h.sum()) == 9
         return h, b
 
-    @testing.for_float_dtypes()
+    # CUB histogram dispatch does not support bfloat16.
+    @testing.for_float_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose()
     def test_histogram_range_with_density(self, xp, dtype):
         a = xp.arange(10, dtype=dtype) + .5
@@ -244,21 +250,24 @@ class TestHistogram(unittest.TestCase):
             values, bins=xp.asarray([0, 2, 3]), weights=weights)
         return a, b
 
-    @testing.for_all_dtypes(no_bool=True, no_complex=True)
+    # CUB histogram dispatch does not support bfloat16.
+    @testing.for_all_dtypes(no_bool=True, no_complex=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_histogram_empty(self, xp, dtype):
         x = xp.array([], dtype)
         y, bin_edges = xp.histogram(x)
         return y, bin_edges
 
-    @testing.for_all_dtypes(no_bool=True, no_complex=True)
+    # CUB histogram dispatch does not support bfloat16.
+    @testing.for_all_dtypes(no_bool=True, no_complex=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_histogram_int_bins(self, xp, dtype):
         x = testing.shaped_arange((10,), xp, dtype)
         y, bin_edges = xp.histogram(x, 4)
         return y, bin_edges
 
-    @testing.for_all_dtypes(no_bool=True, no_complex=True)
+    # CUB histogram dispatch does not support bfloat16.
+    @testing.for_all_dtypes(no_bool=True, no_complex=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_histogram_array_bins(self, xp, dtype):
         x = testing.shaped_arange((10,), xp, dtype)
@@ -266,7 +275,8 @@ class TestHistogram(unittest.TestCase):
         y, bin_edges = xp.histogram(x, bins)
         return y, bin_edges
 
-    @testing.for_all_dtypes(no_bool=True, no_complex=True)
+    # CUB histogram dispatch does not support bfloat16.
+    @testing.for_all_dtypes(no_bool=True, no_complex=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_histogram_numpy_bins(self, xp, dtype):
         x = testing.shaped_arange((10,), xp, dtype)
@@ -274,7 +284,8 @@ class TestHistogram(unittest.TestCase):
         y, bin_edges = xp.histogram(x, bins)
         return y, bin_edges
 
-    @testing.for_all_dtypes(no_bool=True, no_complex=True)
+    # CUB histogram dispatch does not support bfloat16.
+    @testing.for_all_dtypes(no_bool=True, no_complex=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_histogram_list_bins(self, xp, dtype):
         x = testing.shaped_arange((10,), xp, dtype)
@@ -409,7 +420,8 @@ class TestCubHistogram(unittest.TestCase):
             cupy.histogram(x)
 
     @pytest.mark.thread_unsafe(reason="uses AssertFunctionIsCalled")
-    @testing.for_all_dtypes(no_bool=True, no_complex=True)
+    # CUB histogram dispatch does not support bfloat16.
+    @testing.for_all_dtypes(no_bool=True, no_complex=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_histogram(self, xp, dtype):
         x = testing.shaped_arange((10,), xp, dtype)
@@ -433,8 +445,9 @@ class TestCubHistogram(unittest.TestCase):
         return h, b
 
     @pytest.mark.thread_unsafe(reason="uses AssertFunctionIsCalled")
-    @testing.for_all_dtypes_combination(['dtype_a', 'dtype_b'],
-                                        no_bool=True, no_complex=True)
+    # CUB histogram dispatch does not support bfloat16.
+    @testing.for_all_dtypes_combination(
+        ['dtype_a', 'dtype_b'], no_bool=True, no_complex=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_histogram_with_bins(self, xp, dtype_a, dtype_b):
         x = testing.shaped_arange((10,), xp, dtype_a)
@@ -451,8 +464,9 @@ class TestCubHistogram(unittest.TestCase):
         return xp.histogram(x, bins)[0]
 
     @pytest.mark.thread_unsafe(reason="uses AssertFunctionIsCalled")
-    @testing.for_all_dtypes_combination(['dtype_a', 'dtype_b'],
-                                        no_bool=True, no_complex=True)
+    # CUB histogram dispatch does not support bfloat16.
+    @testing.for_all_dtypes_combination(
+        ['dtype_a', 'dtype_b'], no_bool=True, no_complex=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_histogram_with_bins2(self, xp, dtype_a, dtype_b):
         x = testing.shaped_arange((10,), xp, dtype_a)

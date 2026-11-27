@@ -12,8 +12,10 @@ import numpy
 
 import cupy
 from cupy.exceptions import AxisError
+from cupy._util import BF16
 from cupy.testing import _array
 from cupy.testing import _parameterized
+from cupy.testing._helper import installed
 
 from cupy.testing._pytest_impl import is_available
 
@@ -419,45 +421,53 @@ def _convert_output_to_ndarray(c_out, n_out, sp_name, check_sparse_format):
             type(c_out), type(n_out)))
 
 
-def _check_tolerance_keys(rtol, atol):
-    def _check(tol):
-        if isinstance(tol, dict):
-            for k in tol.keys():
-                if type(k) is type:
+class _ToleranceDict(dict):
+    # Helper class to handle tolerances for each dtype.
+    def __init__(self, tols, *, tol_eps=None, tol_tiny=None):
+        self.default = None
+        self.tol_eps = tol_eps
+        self.tol_tiny = tol_tiny
+
+        if not isinstance(tols, dict):
+            self.default = tols
+            return
+
+        for k, v in tols.items():
+            if type(k) is str:
+                if k == "default":
+                    self.default = v
                     continue
-                if type(k) is str and k == 'default':
+                elif k == "bfloat16":
+                    if BF16 is not None:
+                        self[BF16] = v
                     continue
-                msg = ('Keys of the tolerance dictionary need to be type '
-                       'objects as `numpy.float32` and `cupy.float32` or '
-                       '`\'default\'` string.')
-                raise TypeError(msg)
-    _check(rtol)
-    _check(atol)
 
+            # May fail if keys are not clean dtype representations
+            self[numpy.dtype(k).type] = v
 
-def _resolve_tolerance(type_check, result, rtol, atol):
-    def _resolve(dtype, tol):
-        if isinstance(tol, dict):
-            tol1 = tol.get(dtype.type)
-            if tol1 is None:
-                tol1 = tol.get('default')
-                if tol1 is None:
-                    raise TypeError(
-                        'Can not find tolerance for {}'.format(dtype.type))
-            return tol1
-        else:
-            return tol
-
-    dtype = result.dtype
-    rtol1 = _resolve(dtype, rtol)
-    atol1 = _resolve(dtype, atol)
-    return rtol1, atol1
+    def __missing__(self, key):
+        # Note, we return float as it should be precise enough right now
+        # (no float128) and bfloat16 formatting creates issues on error.
+        if self.tol_tiny is not None:
+            try:
+                return float(self.tol_tiny * numpy.finfo(key).tiny)
+            except ValueError:
+                return float(self.tol_tiny * numpy.finfo(numpy.float64).tiny)
+        if self.tol_eps is not None:
+            try:
+                return float(self.tol_eps * numpy.finfo(key).eps)
+            except ValueError:
+                return float(self.tol_eps * numpy.finfo(numpy.float64).eps)
+        if self.default is not None:
+            return self.default
+        raise TypeError(f"tolerance for {key} not found.")
 
 
 def numpy_cupy_allclose(rtol=1e-7, atol=0, err_msg='', verbose=True,
                         name='xp', type_check=True, accept_error=False,
                         sp_name=None, scipy_name=None, contiguous_check=True,
-                        *, _check_sparse_format=True):
+                        *, _check_sparse_format=True,
+                        rtol_eps=None, atol_eps=None, atol_tiny=None):
     """Decorator that checks NumPy results and CuPy ones are close.
 
     Args:
@@ -466,6 +476,8 @@ def numpy_cupy_allclose(rtol=1e-7, atol=0, err_msg='', verbose=True,
              adjust tolerance per dtype. If the dictionary has ``'default'``
              string as its key, its value is used as the default tolerance in
              case any dtype keys do not match.
+             Other strings are converted to the dtype, with "bfloat16" ignored
+             if unavailable.
          atol(float or dict): Absolute tolerance. Besides a float value, a
              dictionary can be supplied as ``rtol``.
          err_msg(str): The error message to be printed in case of failure.
@@ -488,6 +500,11 @@ def numpy_cupy_allclose(rtol=1e-7, atol=0, err_msg='', verbose=True,
              the modules.
          contiguous_check(bool): If ``True``, consistency of contiguity is
              also checked.
+         rtol_eps(float or None): ``rtol`` as a multiple of the dtype eps.
+            If used (as with the below), is used before the default above and
+            float64 is assumed if `finfo` is not defined for the dtype.
+         atol_eps(float or None): ``atol`` as a multiple of the dtype eps.
+         atol_tiny(float or None): ``atol`` in terms of the smallest normal.
 
     Decorated test fixture is required to return the arrays whose values are
     close between ``numpy`` case and ``cupy`` case.
@@ -509,8 +526,6 @@ def numpy_cupy_allclose(rtol=1e-7, atol=0, err_msg='', verbose=True,
 
     .. seealso:: :func:`cupy.testing.assert_allclose`
     """
-    _check_tolerance_keys(rtol, atol)
-
     # When `type_check` is `False`, cupy result and numpy result may have
     # different dtypes so we can not determine the dtype to use from the
     # tolerance associations.
@@ -519,8 +534,12 @@ def numpy_cupy_allclose(rtol=1e-7, atol=0, err_msg='', verbose=True,
             raise TypeError('When `type_check` is `False`, `rtol` and `atol` '
                             'must be supplied as float.')
 
+    rtol = _ToleranceDict(rtol, tol_eps=rtol_eps)
+    atol = _ToleranceDict(atol, tol_eps=atol_eps, tol_tiny=atol_tiny)
+
     def check_func(c, n):
-        rtol1, atol1 = _resolve_tolerance(type_check, c, rtol, atol)
+        rtol1 = rtol[c.dtype.type]
+        atol1 = atol[c.dtype.type]
         _array.assert_allclose(
             c, n, rtol1, atol1, err_msg=err_msg, verbose=verbose)
     return _make_decorator(check_func, name, type_check, contiguous_check,
@@ -869,7 +888,43 @@ def for_dtypes(dtypes, name='dtype'):
 
 _complex_dtypes = (numpy.complex64, numpy.complex128)
 _regular_float_dtypes = (numpy.float64, numpy.float32)
-_float_dtypes = _regular_float_dtypes + (numpy.float16,)
+
+
+# Older NumPy/ml_dtypes versions lack support needed by general tests.
+_bfloat16_testing_available = (
+    BF16 is not None and installed('numpy>=2.5.0', 'ml_dtypes>=0.7.0'))
+
+
+def _make_float_dtypes(no_float16, bfloat16=None):
+    """Return the float dtypes tuple used by testing decorators.
+
+    Args:
+        no_float16: If True, omit ``numpy.float16``.
+        bfloat16: Tri-state control for the optional bfloat16 scalar type
+            (``ml_dtypes``), independent of ``no_float16`` when True/False:
+            ``None`` — include it iff float16 is included and ``ml_dtypes`` is
+            available with NumPy >= 2.5 and ml_dtypes >= 0.7;
+            ``True`` — include when those requirements are met, even if
+            float16 is omitted;
+            ``False`` — never include it.
+    """
+    dtypes = list(_regular_float_dtypes)
+    if not no_float16:
+        dtypes.append(numpy.float16)
+
+    want_bf16 = False
+    if bfloat16 is True:
+        want_bf16 = _bfloat16_testing_available
+    elif bfloat16 is None and not no_float16:
+        want_bf16 = _bfloat16_testing_available
+    if want_bf16:
+        dtypes.append(BF16)
+
+    return tuple(dtypes)
+
+
+# Full float set (including bfloat16 when available) for dtype detection.
+_float_dtypes = _make_float_dtypes(False, None)
 _signed_dtypes = tuple(numpy.dtype(i).type for i in 'bhilq')
 _unsigned_dtypes = tuple(numpy.dtype(i).type for i in 'BHILQ')
 _int_dtypes = _signed_dtypes + _unsigned_dtypes
@@ -878,11 +933,8 @@ _regular_dtypes = _regular_float_dtypes + _int_bool_dtypes
 _dtypes = _float_dtypes + _int_bool_dtypes
 
 
-def _make_all_dtypes(no_float16, no_bool, no_complex):
-    if no_float16:
-        dtypes = _regular_float_dtypes
-    else:
-        dtypes = _float_dtypes
+def _make_all_dtypes(no_float16, no_bool, no_complex, bfloat16=None):
+    dtypes = _make_float_dtypes(no_float16, bfloat16)
 
     if no_bool:
         dtypes += _int_dtypes
@@ -896,7 +948,7 @@ def _make_all_dtypes(no_float16, no_bool, no_complex):
 
 
 def for_all_dtypes(name='dtype', no_float16=False, no_bool=False,
-                   no_complex=False):
+                   no_complex=False, bfloat16=None):
     """Decorator that checks the fixture with all dtypes.
 
     Args:
@@ -907,6 +959,11 @@ def for_all_dtypes(name='dtype', no_float16=False, no_bool=False,
              omitted from candidate dtypes.
          no_complex(bool): If ``True``, ``numpy.complex64`` and
              ``numpy.complex128`` are omitted from candidate dtypes.
+         bfloat16(bool or None): Control for the optional bfloat16 scalar type
+             (requires NumPy >= 2.5 and ml_dtypes >= 0.7). Default ``None``
+             follows ``no_float16``:
+             bfloat16 is tested whenever float16 is. ``True`` forces it when
+             available (even if ``no_float16=True``). ``False`` omits it.
 
     dtypes to be tested: ``numpy.complex64`` (optional),
     ``numpy.complex128`` (optional),
@@ -949,28 +1006,29 @@ def for_all_dtypes(name='dtype', no_float16=False, no_bool=False,
 
     .. seealso:: :func:`cupy.testing.for_dtypes`
     """
-    return for_dtypes(_make_all_dtypes(no_float16, no_bool, no_complex),
-                      name=name)
+    return for_dtypes(
+        _make_all_dtypes(no_float16, no_bool, no_complex, bfloat16),
+        name=name)
 
 
-def for_float_dtypes(name='dtype', no_float16=False):
+def for_float_dtypes(name='dtype', no_float16=False, bfloat16=None):
     """Decorator that checks the fixture with float dtypes.
 
     Args:
          name(str): Argument name to which specified dtypes are passed.
          no_float16(bool): If ``True``, ``numpy.float16`` is
              omitted from candidate dtypes.
+         bfloat16(bool or None): Same semantics as in
+             :func:`cupy.testing.for_all_dtypes`.
 
     dtypes to be tested are ``numpy.float16`` (optional), ``numpy.float32``,
-    and ``numpy.float64``.
+    ``numpy.float64``, and bfloat16 (optional, with NumPy >= 2.5 and
+    ml_dtypes >= 0.7 and not excluded with ``bfloat16=False``).
 
     .. seealso:: :func:`cupy.testing.for_dtypes`,
         :func:`cupy.testing.for_all_dtypes`
     """
-    if no_float16:
-        return for_dtypes(_regular_float_dtypes, name=name)
-    else:
-        return for_dtypes(_float_dtypes, name=name)
+    return for_dtypes(_make_float_dtypes(no_float16, bfloat16), name=name)
 
 
 def for_signed_dtypes(name='dtype'):
@@ -1117,7 +1175,7 @@ def for_dtypes_combination(types, names=('dtype',), full=None):
 
 def for_all_dtypes_combination(names=('dtyes',),
                                no_float16=False, no_bool=False, full=None,
-                               no_complex=False):
+                               no_complex=False, bfloat16=None):
     """Decorator that checks the fixture with a product set of all dtypes.
 
     Args:
@@ -1132,10 +1190,12 @@ def for_all_dtypes_combination(names=('dtyes',),
              (see description in :func:`cupy.testing.for_dtypes_combination`).
          no_complex(bool): If, True, ``numpy.complex64`` and
              ``numpy.complex128`` are omitted from candidate dtypes.
+         bfloat16(bool or None): Same semantics as in
+             :func:`cupy.testing.for_all_dtypes`.
 
     .. seealso:: :func:`cupy.testing.for_dtypes_combination`
     """
-    types = _make_all_dtypes(no_float16, no_bool, no_complex)
+    types = _make_all_dtypes(no_float16, no_bool, no_complex, bfloat16)
     return for_dtypes_combination(types, names, full)
 
 

@@ -55,7 +55,8 @@ class TestTrim:
         return scp.stats.trim_mean(a, proportiontocut)
 
     @testing.for_CF_orders()
-    @testing.for_all_dtypes()
+    # TODO: Revisit bfloat16 tolerances for rounding differences.
+    @testing.for_all_dtypes(bfloat16=False)
     @testing.numpy_cupy_allclose(
         scipy_name='scp', rtol=1e-6, contiguous_check=False)
     @pytest.mark.parametrize('axis', [0, 1, 2, 3, -1, None])
@@ -74,7 +75,8 @@ class TestTrim:
 @testing.with_requires('scipy')
 class TestZmap:
 
-    @testing.for_all_dtypes(no_bool=True)
+    # bfloat16 normalization differs from SciPy, including near zero.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(scipy_name='scp', atol=atol, rtol=rtol)
     def test_zmap_1dim(self, xp, scp, dtype):
         x = testing.shaped_random((10,), xp, dtype=dtype)
@@ -88,7 +90,8 @@ class TestZmap:
         y = testing.shaped_random((2, 1), xp, dtype=dtype)
         return scp.stats.zmap(x, y)
 
-    @testing.for_all_dtypes(no_bool=True)
+    # bfloat16 normalization differs from SciPy, including near zero.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(scipy_name='scp', atol=atol, rtol=rtol)
     def test_zmap_multi_dim(self, xp, scp, dtype):
         x = testing.shaped_random((3, 4, 5, 7), xp, dtype=dtype)
@@ -108,14 +111,16 @@ class TestZmap:
         y = testing.shaped_random((4, 4, 5, 6, 2), xp, dtype=xp.float16)
         return scp.stats.zmap(x, y)
 
-    @testing.for_all_dtypes(no_bool=True)
+    # bfloat16 normalization differs from SciPy, including near zero.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(scipy_name='scp', atol=atol, rtol=rtol)
     def test_zmap_with_axis(self, xp, scp, dtype):
         x = testing.shaped_random((2, 3), xp, dtype=dtype)
         y = testing.shaped_random((1, 3), xp, dtype=dtype)
         return scp.stats.zmap(x, y, axis=1)
 
-    @testing.for_all_dtypes(no_bool=True)
+    # bfloat16 normalization differs from SciPy, including near zero.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(scipy_name='scp', atol=atol, rtol=rtol)
     def test_zmap_with_axis_ddof(self, xp, scp, dtype):
         x = testing.shaped_random((4, 5), xp, dtype=dtype)
@@ -200,7 +205,8 @@ class TestZscore:
         x = testing.shaped_random((3, 4, 5, 7), xp, dtype=xp.float16)
         return scp.stats.zscore(x)
 
-    @testing.for_all_dtypes(no_bool=True)
+    # bfloat16 normalization differs from SciPy, including near zero.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(scipy_name='scp', atol=atol, rtol=atol)
     def test_zscore_with_axis(self, xp, scp, dtype):
         x = testing.shaped_random((5, 6), xp, dtype=dtype)
@@ -218,7 +224,8 @@ class TestZscore:
         return scp.stats.zscore(x, axis=2, ddof=2)
 
     @testing.with_requires('scipy>=1.15')
-    @testing.for_all_dtypes(no_bool=True)
+    # bfloat16 result dtype differs: CuPy float64, reference bfloat16.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(scipy_name='scp')
     def test_zscore_empty(self, xp, scp, dtype):
         x = xp.array([], dtype=dtype)

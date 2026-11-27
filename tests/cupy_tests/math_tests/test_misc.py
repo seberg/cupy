@@ -100,20 +100,23 @@ class TestMisc:
         a = testing.shaped_arange((2, 3, 4), xp, dtype)
         return a.clip(3, 13)
 
-    @testing.for_all_dtypes(no_bool=True, no_complex=True)
+    # bfloat16 clip does not accept an unbounded (None) limit.
+    @testing.for_all_dtypes(no_bool=True, no_complex=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_clip_min_none(self, xp, dtype):
         a = testing.shaped_arange((2, 3, 4), xp, dtype)
         return a.clip(None, 3)
 
-    @testing.for_all_dtypes(no_bool=True, no_complex=True)
+    # bfloat16 clip does not accept an unbounded (None) limit.
+    @testing.for_all_dtypes(no_bool=True, no_complex=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_clip_max_none(self, xp, dtype):
         a = testing.shaped_arange((2, 3, 4), xp, dtype)
         return a.clip(3, None)
 
     @testing.with_requires("numpy>=2.1")
-    @testing.for_all_dtypes(no_bool=True, no_complex=True)
+    # bfloat16 clip does not accept an unbounded (None) limit.
+    @testing.for_all_dtypes(no_bool=True, no_complex=True, bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_clip_min_max_none(self, xp, dtype):
         a = testing.shaped_arange((2, 3, 4), xp, dtype)

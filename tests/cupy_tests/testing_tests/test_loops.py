@@ -329,11 +329,12 @@ class TestNumPyCuPyAllCloseTolPerDtype(unittest.TestCase):
         if xp is numpy:
             return numpy.array(1, dtype=dtype)
         else:
-            finfo = numpy.finfo(dtype)
-            return cupy.array(1 + finfo.eps, dtype=dtype)
+            info = numpy.finfo(dtype)
+            return cupy.array(1 + info.eps, dtype=dtype)
 
     @testing.for_float_dtypes()
-    @testing.numpy_cupy_allclose(rtol={numpy.float16: 1e-3, 'default': 1e-6})
+    @testing.numpy_cupy_allclose(
+        rtol={numpy.float16: 1e-3, 'bfloat16': 1e-2, 'default': 1e-6})
     def test_rtol_per_dtype(self, xp, dtype):
         return self._test_rtol(xp, dtype)
 
@@ -345,17 +346,18 @@ class TestNumPyCuPyAllCloseTolPerDtype(unittest.TestCase):
 
     def test_rtol_invalid_key(self):
         with self.assertRaises(TypeError):
-            testing.numpy_cupy_allclose(rtol={'float16': 1e-3})
+            testing.numpy_cupy_allclose(rtol={object(): 1e-3})
 
     def _test_atol(self, xp, dtype):
         if xp is numpy:
             return numpy.array(0, dtype=dtype)
         else:
-            finfo = numpy.finfo(dtype)
-            return cupy.array(finfo.eps, dtype=dtype)
+            info = numpy.finfo(dtype)
+            return cupy.array(info.eps, dtype=dtype)
 
     @testing.for_float_dtypes()
-    @testing.numpy_cupy_allclose(atol={numpy.float16: 1e-3, 'default': 1e-6})
+    @testing.numpy_cupy_allclose(
+        atol={numpy.float16: 1e-3, 'bfloat16': 1e-2, 'default': 1e-6})
     def test_atol_per_dtype(self, xp, dtype):
         return self._test_atol(xp, dtype)
 
@@ -367,7 +369,7 @@ class TestNumPyCuPyAllCloseTolPerDtype(unittest.TestCase):
 
     def test_atol_invalid_key(self):
         with self.assertRaises(TypeError):
-            testing.numpy_cupy_allclose(atol={'float16': 1e-3})
+            testing.numpy_cupy_allclose(atol={object(): 1e-3})
 
 
 class TestIgnoreOfNegativeValueDifferenceOnCpuAndGpu(unittest.TestCase):
@@ -511,3 +513,51 @@ class TestSkipFail(unittest.TestCase):
             return xp.array(True)
         else:
             self._skip('skip')
+
+
+@pytest.mark.parametrize('numpy_version', ['2.4.0', '2.5.0', '2.6.0.dev0'])
+@pytest.mark.parametrize('ml_dtypes_version', [None, '0.6.0', '0.7.0'])
+def test_bfloat16_testing_requirements(monkeypatch, numpy_version,
+                                       ml_dtypes_version):
+    import importlib.metadata
+    import runpy
+
+    original_version = importlib.metadata.version
+
+    def version(name):
+        if name == 'numpy':
+            return numpy_version
+        if name == 'ml_dtypes':
+            if ml_dtypes_version is None:
+                raise importlib.metadata.PackageNotFoundError(name)
+            return ml_dtypes_version
+        return original_version(name)
+
+    monkeypatch.setattr(importlib.metadata, 'version', version)
+    monkeypatch.setattr(
+        importlib.metadata, 'packages_distributions', lambda: {})
+    namespace = runpy.run_path(_loops.__file__)
+    make_dtypes = namespace['_make_float_dtypes']
+    available = (_loops.BF16 is not None and numpy_version != '2.4.0'
+                 and ml_dtypes_version == '0.7.0')
+    for no_float16 in (False, True):
+        for bfloat16 in (None, False, True):
+            dtypes = make_dtypes(no_float16, bfloat16)
+            assert (numpy.float16 in dtypes) == (not no_float16)
+            expected = available and (bfloat16 is True or (
+                bfloat16 is None and not no_float16))
+            assert (_loops.BF16 in dtypes) == expected
+
+
+def test_bfloat16_tolerance_without_ml_dtypes(monkeypatch):
+    monkeypatch.setattr(_loops, 'BF16', None)
+    tolerance = _loops._ToleranceDict({'bfloat16': 1e-2, 'default': 1e-6})
+    assert tolerance[numpy.float32] == 1e-6
+
+
+@pytest.mark.parametrize('dtype', [numpy.float32, numpy.float64, numpy.int32])
+def test_tolerance_eps_and_tiny(dtype):
+    info = numpy.finfo(dtype if dtype is not numpy.int32 else numpy.float64)
+    assert _loops._ToleranceDict(0, tol_eps=2)[dtype] == 2 * info.eps
+    assert _loops._ToleranceDict(0, tol_tiny=2)[dtype] == 2 * info.tiny
+    assert _loops._ToleranceDict({dtype: 0}, tol_eps=2)[dtype] == 0

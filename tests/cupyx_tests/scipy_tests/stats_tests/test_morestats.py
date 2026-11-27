@@ -48,28 +48,32 @@ def _make_data(shape, xp, dtype):
 @testing.with_requires('scipy>=1.16')
 class TestBoxcox_llf:
 
-    @testing.for_all_dtypes(no_bool=True)
+    # TODO: Establish bfloat16 boxcox_llf tolerances; none are defined.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(scipy_name='scp', atol=atol, rtol=rtol)
     def test_array_1dim(self, xp, scp, dtype):
         data = _make_data((10,), xp, dtype)
         lmb = 4.0
         return scp.stats.boxcox_llf(lmb, data)
 
-    @testing.for_all_dtypes(no_bool=True)
+    # TODO: Establish bfloat16 boxcox_llf tolerances; none are defined.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(scipy_name='scp', atol=atol, rtol=rtol)
     def test_array_2dim(self, xp, scp, dtype):
         data = _make_data((3, 8), xp, dtype)
         lmb = 6.0
         return scp.stats.boxcox_llf(lmb, data)
 
-    @testing.for_all_dtypes(no_bool=True)
+    # TODO: Establish bfloat16 boxcox_llf tolerances; none are defined.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(scipy_name='scp', atol=atol, rtol=rtol)
     def test_array_3dim(self, xp, scp, dtype):
         data = _make_data((10, 3, 4), xp, dtype)
         lmb = 3.0
         return scp.stats.boxcox_llf(lmb, data)
 
-    @testing.for_all_dtypes(no_bool=True)
+    # TODO: Establish bfloat16 boxcox_llf tolerances; none are defined.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(scipy_name='scp', atol=atol, rtol=rtol)
     def test_array_multi_dim(self, xp, scp, dtype):
         if dtype == xp.float16:
@@ -79,14 +83,16 @@ class TestBoxcox_llf:
         lmb = 3.0
         return scp.stats.boxcox_llf(lmb, data)
 
-    @testing.for_all_dtypes(no_bool=True)
+    # TODO: Establish bfloat16 boxcox_llf tolerances; none are defined.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(scipy_name='scp', atol=atol, rtol=rtol)
     def test_array_zero_lmb(self, xp, scp, dtype):
         data = _make_data((9, 14), xp, dtype)
         lmb = 0.0
         return scp.stats.boxcox_llf(lmb, data)
 
-    @testing.for_all_dtypes(no_bool=True)
+    # TODO: Establish bfloat16 boxcox_llf tolerances; none are defined.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(scipy_name='scp', atol=atol, rtol=rtol)
     def test_array_empty(self, xp, scp, dtype):
         data = _make_data((0,), xp, dtype)
@@ -100,14 +106,16 @@ class TestBoxcox_llf:
         lmb = -45
         return scp.stats.boxcox_llf(lmb, data)
 
-    @testing.for_all_dtypes(no_bool=True)
+    # TODO: Establish bfloat16 boxcox_llf tolerances; none are defined.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(scipy_name='scp', atol=atol, rtol=rtol)
     def test_array_lmb_neg2(self, xp, scp, dtype):
         data = _make_data((3, 5), xp, dtype)
         lmb = -3.0
         return scp.stats.boxcox_llf(lmb, data)
 
-    @testing.for_all_dtypes(no_bool=True)
+    # TODO: Establish bfloat16 boxcox_llf tolerances; none are defined.
+    @testing.for_all_dtypes(no_bool=True, bfloat16=False)
     @testing.numpy_cupy_allclose(scipy_name='scp', atol=atol, rtol=rtol)
     def test_array_empty_neg_lmb(self, xp, scp, dtype):
         data = _make_data((0,), xp, dtype)

@@ -121,7 +121,8 @@ class TestFromData(unittest.TestCase):
 
     @testing.for_orders('CFAK', name='src_order')
     @testing.for_orders('CFAK', name='dst_order')
-    @testing.for_all_dtypes_combination(names=('dtype1', 'dtype2'))
+    @testing.for_all_dtypes_combination(
+        names=('dtype1', 'dtype2'))
     @testing.numpy_cupy_array_equal(strides_check=True)
     def test_array_from_list_of_cupy(
             self, xp, dtype1, dtype2, src_order, dst_order):
@@ -220,8 +221,9 @@ class TestFromData(unittest.TestCase):
         return xp.array(a, dtype=dtype2, order=order)
 
     @testing.for_orders('CFAK')
-    @testing.for_all_dtypes(name='dtype1', no_complex=True)
-    @testing.for_all_dtypes(name='dtype2')
+    # bfloat16 dtype.char ('E') is not recognized by this path.
+    @testing.for_all_dtypes(name='dtype1', no_complex=True, bfloat16=False)
+    @testing.for_all_dtypes(name='dtype2', bfloat16=False)
     @testing.numpy_cupy_array_equal()
     def test_array_copy_with_dtype_char(self, xp, dtype1, dtype2, order):
         # complex to real makes no sense
@@ -250,8 +252,9 @@ class TestFromData(unittest.TestCase):
 
     @testing.for_orders('CFAK', name='src_order')
     @testing.for_orders('CFAK', name='dst_order')
-    @testing.for_all_dtypes(name='dtype1', no_complex=True)
-    @testing.for_all_dtypes(name='dtype2')
+    # bfloat16 dtype.char ('E') is not recognized by this path.
+    @testing.for_all_dtypes(name='dtype1', no_complex=True, bfloat16=False)
+    @testing.for_all_dtypes(name='dtype2', bfloat16=False)
     @testing.numpy_cupy_array_equal(strides_check=True)
     def test_array_copy_list_of_numpy_with_dtype_char(self, xp, dtype1,
                                                       dtype2, src_order,
@@ -279,8 +282,9 @@ class TestFromData(unittest.TestCase):
 
     @testing.for_orders('CFAK', name='src_order')
     @testing.for_orders('CFAK', name='dst_order')
-    @testing.for_all_dtypes(name='dtype1', no_complex=True)
-    @testing.for_all_dtypes(name='dtype2')
+    # bfloat16 dtype.char ('E') is not recognized by this path.
+    @testing.for_all_dtypes(name='dtype1', no_complex=True, bfloat16=False)
+    @testing.for_all_dtypes(name='dtype2', bfloat16=False)
     @testing.numpy_cupy_array_equal(strides_check=True)
     def test_array_copy_list_of_cupy_with_dtype_char(self, xp, dtype1, dtype2,
                                                      src_order, dst_order):
@@ -617,14 +621,16 @@ max_cuda_array_interface_version = 3
     'strides': (False, None, True),
 }))
 class TestCudaArrayInterface(unittest.TestCase):
-    @testing.for_all_dtypes()
+    # CUDA array interface exposes bfloat16 as an untyped void dtype.
+    @testing.for_all_dtypes(bfloat16=False)
     def test_base(self, dtype):
         a = testing.shaped_arange((2, 3, 4), cupy, dtype)
         b = cupy.asarray(
             DummyObjectWithCudaArrayInterface(a, self.ver, self.strides))
         testing.assert_array_equal(a, b)
 
-    @testing.for_all_dtypes()
+    # CUDA array interface exposes bfloat16 as an untyped void dtype.
+    @testing.for_all_dtypes(bfloat16=False)
     def test_not_copied(self, dtype):
         a = testing.shaped_arange((2, 3, 4), cupy, dtype)
         b = cupy.asarray(
@@ -632,7 +638,8 @@ class TestCudaArrayInterface(unittest.TestCase):
         a.fill(0)
         testing.assert_array_equal(a, b)
 
-    @testing.for_all_dtypes()
+    # The generated test kernel does not compile for bfloat16.
+    @testing.for_all_dtypes(bfloat16=False)
     def test_order(self, dtype):
         a = testing.shaped_arange((2, 3, 4), cupy, dtype)
         b = cupy.asarray(
@@ -659,7 +666,8 @@ class TestCudaArrayInterface(unittest.TestCase):
         assert a.data.ptr == 0
         assert a.size == 0
 
-    @testing.for_all_dtypes()
+    # The generated test kernel does not compile for bfloat16.
+    @testing.for_all_dtypes(bfloat16=False)
     def test_asnumpy(self, dtype):
         a = testing.shaped_arange((2, 3, 4), cupy, dtype)
         b = DummyObjectWithCudaArrayInterface(a, self.ver, self.strides)
